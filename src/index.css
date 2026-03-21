@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #6b0f1a;
+  --color-secondary: #8c1522;
+  --color-gold-light: #f9d976;
+  --color-gold-dark: #b8860b;
+  --color-text-dark: #2d2d2d;
+
+  --font-prompt: "Prompt", sans-serif;
+  --font-roboto: "Roboto", sans-serif;
+}
+
+@layer base {
+  html,
+  body {
+    @apply m-0 p-0 w-screen h-screen overflow-hidden bg-black font-prompt;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+}
