@@ -97,16 +97,15 @@ export default function AdminModal({
         </div>
         <div className="mb-5">
           <label className="block mb-2 font-semibold text-gray-700">
-            รับซื้อ ทองรูปพรรณ
+            รับซื้อ ทองรูปพรรณ (ไม่จำเป็นต้องกรอก)
           </label>
           <input
             type="number"
-            value={formData.ornaReturn}
             onChange={(e) =>
               setFormData({ ...formData, ornaReturn: e.target.value })
             }
             className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-primary outline-none"
-            placeholder="ปล่อยว่างเพื่อคำนวณอัตโนมัติ"
+            placeholder="ระบบจะคำนวณให้โดยอัตโนมัติจากราคาทองแท่ง"
           />
         </div>
 
