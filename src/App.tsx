@@ -85,8 +85,6 @@ export default function App() {
         </h2>
         <p className="text-lg text-gray-300">
           ระบบถูกออกแบบมาเพื่อแสดงผลแนวนอนเท่านั้น
-          <br />
-          กรุณาหมุนโทรศัพท์ของคุณเพื่อใช้งาน
         </p>
       </div>
 
