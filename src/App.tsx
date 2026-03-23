@@ -59,14 +59,14 @@ export default function App() {
     }
 
     if (audioRef.current) {
-      audioRef.current.volume = 0;
+      audioRef.current.muted = true;
       audioRef.current
         .play()
         .then(() => {
           audioRef.current?.pause();
           if (audioRef.current) {
             audioRef.current.currentTime = 0;
-            audioRef.current.volume = 1;
+            audioRef.current.muted = false;
           }
         })
         .catch(() => {});
