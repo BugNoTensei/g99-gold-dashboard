@@ -5,17 +5,29 @@ import AdsSlider from "./components/AdsSlider";
 import AdminModal from "./components/AdminModal";
 import { APP_CONFIG } from "./config";
 import { useGoldPrice } from "./hooks/useGoldPrice";
-
+import { CheckCircleIcon, WarningCircleIcon } from "@phosphor-icons/react";
 export default function App() {
   const [isSystemReady, setIsSystemReady] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [panelOpacity, setPanelOpacity] = useState(1);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const audioRef = useRef(
     new Audio(
       "https://actions.google.com/sounds/v1/alarms/dinner_bell_triangle.ogg",
     ),
   );
+
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success",
+  ) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handlePriceChange = () => {
     audioRef.current.play().catch(() => {});
@@ -56,7 +68,7 @@ export default function App() {
   const displayTime = `ข้อมูลล่าสุด ณ วันที่ ${dateObj.toLocaleDateString("th-TH", { year: "numeric", month: "2-digit", day: "2-digit" })} ${dateObj.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} น.`;
 
   return (
-    <div className="flex w-full h-screen relative font-prompt">
+    <div className="flex w-full h-screen relative font-prompt overflow-hidden">
       {!isSystemReady && (
         <div
           onClick={initSystem}
@@ -116,7 +128,31 @@ export default function App() {
         onClose={() => setIsModalOpen(false)}
         currentPrices={prices}
         onSave={handleSavePrice}
+        onShowToast={showToast}
       />
+
+      <div
+        className={`fixed top-8 right-8 z-10000 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl text-white font-medium min-w-[320px] ${
+          toast
+            ? "translate-x-0 opacity-100 scale-100"
+            : "translate-x-[150%] opacity-0 scale-90"
+        } ${toast?.type === "success" ? "bg-green-600" : "bg-red-600"}`}
+      >
+        {toast?.type === "success" ? (
+          <CheckCircleIcon
+            size={32}
+            weight="fill"
+            className="text-white drop-shadow-md"
+          />
+        ) : (
+          <WarningCircleIcon
+            size={32}
+            weight="fill"
+            className="text-white drop-shadow-md"
+          />
+        )}
+        <span className="text-lg drop-shadow-md">{toast?.message}</span>
+      </div>
     </div>
   );
 }

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import type { GoldPrices } from "../services/api";
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   currentPrices: GoldPrices;
   onSave: (payload: GoldPrices) => Promise<void>;
+  onShowToast: (msg: string, type: "success" | "error") => void;
 }
 
 export default function AdminModal({
@@ -12,6 +14,7 @@ export default function AdminModal({
   onClose,
   currentPrices,
   onSave,
+  onShowToast,
 }: Props) {
   const [formData, setFormData] = useState({
     barBuy: "",
@@ -37,18 +40,26 @@ export default function AdminModal({
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
-    if (!formData.barBuy || !formData.barSale)
-      return alert("กรุณากรอกราคาแท่งให้ครบ");
+    if (!formData.barBuy || !formData.barSale) {
+      return onShowToast("กรุณากรอกราคาแท่งให้ครบ", "error");
+    }
+
     setIsSaving(true);
-    await onSave({
-      barBuy: Number(formData.barBuy),
-      barSale: Number(formData.barSale),
-      ornaReturn: formData.ornaReturn
-        ? Number(formData.ornaReturn)
-        : Number(formData.barBuy) * 0.95,
-    });
-    setIsSaving(false);
-    onClose();
+    try {
+      await onSave({
+        barBuy: Number(formData.barBuy),
+        barSale: Number(formData.barSale),
+        ornaReturn: formData.ornaReturn
+          ? Number(formData.ornaReturn)
+          : Number(formData.barBuy) * 0.95,
+      });
+      onShowToast("อัปเดตราคาสำเร็จ!", "success");
+      onClose();
+    } catch {
+      onShowToast("เกิดข้อผิดพลาดในการบันทึกข้อมูล", "error");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

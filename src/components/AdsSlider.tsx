@@ -31,7 +31,7 @@ export default function AdsSlider({
         return (
           <div
             key={idx}
-            className={`absolute inset-0 transition-all duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)] will-change-transform-opacity ${
+            className={`absolute inset-0 transition-all duration-1200 ease-[cubic-bezier(0.23,1,0.32,1)] will-change-transform-opacity ${
               isActive
                 ? "opacity-100 translate-x-0 skew-x-0 scale-100 z-10"
                 : "opacity-0 translate-x-full -skew-x-12 scale-110 z-0"
@@ -40,12 +40,12 @@ export default function AdsSlider({
             <img
               src={src}
               alt={`Ad ${idx}`}
-              className={`w-full h-full object-cover transition-transform duration-[10000ms] linear ${
+              className={`w-full h-full object-cover transition-transform duration-10000 linear ${
                 isActive ? "scale-110" : "scale-100"
               }`}
             />
 
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-black/20" />
           </div>
         );
       })}
