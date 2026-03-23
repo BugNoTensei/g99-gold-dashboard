@@ -5,7 +5,12 @@ import AdsSlider from "./components/AdsSlider";
 import AdminModal from "./components/AdminModal";
 import { APP_CONFIG } from "./config";
 import { useGoldPrice } from "./hooks/useGoldPrice";
-import { CheckCircleIcon, WarningCircleIcon } from "@phosphor-icons/react";
+import {
+  CheckCircleIcon,
+  WarningCircleIcon,
+  DeviceMobileIcon,
+  ArrowsClockwiseIcon,
+} from "@phosphor-icons/react";
 
 export default function App() {
   const [isSystemReady, setIsSystemReady] = useState(false);
@@ -69,57 +74,76 @@ export default function App() {
   const displayTime = `ข้อมูลล่าสุด ณ วันที่ ${dateObj.toLocaleDateString("th-TH", { year: "numeric", month: "2-digit", day: "2-digit" })} ${dateObj.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} น.`;
 
   return (
-    <div className="flex w-full h-dvh relative font-prompt overflow-hidden">
+    <div className="flex flex-row w-full h-dvh relative font-prompt overflow-hidden bg-black">
+      <div className="portrait:flex landscape:hidden fixed inset-0 z-99999 bg-black text-white flex-col items-center justify-center p-8 text-center">
+        <div className="flex items-center justify-center gap-4 mb-6 text-gold-light">
+          <DeviceMobileIcon size={64} className="animate-pulse" />
+          <ArrowsClockwiseIcon size={48} />
+        </div>
+        <h2 className="text-3xl font-bold text-gold-light mb-4">
+          โปรดหมุนหน้าจอเป็นแนวนอน
+        </h2>
+        <p className="text-lg text-gray-300">
+          ระบบถูกออกแบบมาเพื่อแสดงผลแนวนอนเท่านั้น
+          <br />
+          กรุณาหมุนโทรศัพท์ของคุณเพื่อใช้งาน
+        </p>
+      </div>
+
       {!isSystemReady && (
         <div
           onClick={initSystem}
           className="absolute inset-0 bg-black/90 text-white flex flex-col items-center justify-center z-9999 cursor-pointer"
         >
-          <h2 className="text-gold-light text-xl md:text-3xl mb-4 text-center px-4">
+          <h2 className="text-gold-light text-[4vh] mb-[2vh] text-center px-4">
             คลิกหน้าจอ 1 ครั้งเพื่อเริ่มใช้งาน
           </h2>
-          <p className="text-sm md:text-base text-center px-4 text-gray-300">
+          <p className="text-[2vh] text-center px-4 text-gray-300">
             (ระบบต้องการรับการอนุญาตเพื่อเล่นเสียงแจ้งเตือน)
           </p>
         </div>
       )}
 
       <div
-        className="w-1/2 flex-none bg-linear-to-br from-primary to-secondary p-2 md:p-8 flex flex-col justify-start border-r-8 border-gold-dark z-10 transition-opacity duration-300"
+        className="w-1/2 h-full bg-linear-to-br from-primary to-secondary p-[2vh_2vw] flex flex-col justify-center gap-[2vh] border-r-[0.5vw] border-gold-dark z-10 transition-opacity duration-300"
         style={{ opacity: panelOpacity }}
       >
-        <div className="text-center mb-2 md:mb-8 flex-none">
+        <div className="text-center flex-none">
           {APP_CONFIG.STORE_LOGO_URL ? (
             <img
               src={APP_CONFIG.STORE_LOGO_URL}
               alt="Store Logo"
-              className="max-h-[6vh] md:max-h-[12vh] w-auto mx-auto mb-1 md:mb-4 drop-shadow-lg"
+              className="max-h-[10vh] w-auto mx-auto mb-[1vh] drop-shadow-lg"
             />
           ) : (
-            <div className="text-gold-light text-xl md:text-5xl font-bold drop-shadow-lg mb-1 md:mb-4">
+            <div className="text-gold-light text-[4.5vh] font-bold drop-shadow-lg mb-[1vh]">
               GOLDEN99
             </div>
           )}
 
-          <div className="text-white text-lg md:text-4xl font-medium mb-0.5 md:mb-2 leading-tight">
+          <div className="text-white text-[3.5vh] font-medium mb-[0.5vh] leading-tight">
             ราคาทองคำวันนี้
           </div>
-          <div className="text-[#ffcccc] text-[0.6rem] md:text-sm font-light">
+          <div className="text-[#ffcccc] text-[1.5vh] font-light">
             {displayTime}
           </div>
         </div>
 
-        <PriceCategory title="ทองคำแท่ง">
-          <PriceRow label="รับซื้อ" type="buy" price={prices.barBuy} />
-          <PriceRow label="ขายออก" type="sell" price={prices.barSale} />
-        </PriceCategory>
+        <div className="flex-none">
+          <PriceCategory title="ทองคำแท่ง">
+            <PriceRow label="รับซื้อ" type="buy" price={prices.barBuy} />
+            <PriceRow label="ขายออก" type="sell" price={prices.barSale} />
+          </PriceCategory>
+        </div>
 
-        <PriceCategory title="ทองรูปพรรณ">
-          <PriceRow label="รับซื้อ" type="buy" price={prices.ornaReturn} />
-        </PriceCategory>
+        <div className="flex-none">
+          <PriceCategory title="ทองรูปพรรณ">
+            <PriceRow label="รับซื้อ" type="buy" price={prices.ornaReturn} />
+          </PriceCategory>
+        </div>
       </div>
 
-      <div className="w-1/2 grow relative bg-black">
+      <div className="w-1/2 h-full relative bg-black">
         <AdsSlider
           images={APP_CONFIG.ADS_IMAGES}
           interval={APP_CONFIG.SLIDER_INTERVAL_MS}
@@ -137,7 +161,7 @@ export default function App() {
       />
 
       <div
-        className={`fixed top-4 right-4 z-10000 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl text-white font-medium min-w-70 ${
+        className={`fixed top-[4vh] right-[2vw] z-10000 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex items-center gap-[1vw] px-[2vw] py-[2vh] rounded-2xl shadow-2xl text-white font-medium min-w-[320px] ${
           toast
             ? "translate-x-0 opacity-100 scale-100"
             : "translate-x-[150%] opacity-0 scale-90"
@@ -145,18 +169,18 @@ export default function App() {
       >
         {toast?.type === "success" ? (
           <CheckCircleIcon
-            size={28}
+            size={32}
             weight="fill"
             className="text-white drop-shadow-md"
           />
         ) : (
           <WarningCircleIcon
-            size={28}
+            size={32}
             weight="fill"
             className="text-white drop-shadow-md"
           />
         )}
-        <span className="text-base drop-shadow-md">{toast?.message}</span>
+        <span className="text-[2.5vh] drop-shadow-md">{toast?.message}</span>
       </div>
     </div>
   );
