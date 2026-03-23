@@ -24,7 +24,7 @@ export default function AdsSlider({
   }, [images.length, interval]);
 
   return (
-    <div className="w-1/2 h-full relative bg-black overflow-hidden group">
+    <div className="w-full h-[40%] md:w-1/2 md:h-full relative bg-black overflow-hidden group">
       {images.map((src, idx) => {
         const isActive = idx === currentIndex;
 
@@ -50,10 +50,10 @@ export default function AdsSlider({
         );
       })}
 
-      <div className="absolute bottom-6 right-6 flex gap-3 z-50 transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+      <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 flex gap-2 md:gap-3 z-50 transition-opacity duration-300 opacity-100 md:opacity-0 md:group-hover:opacity-100">
         <button
           onClick={onToggleFullscreen}
-          className="bg-black/30 hover:bg-black/80 text-white/50 hover:text-white border border-white/10 w-12 h-12 rounded-full flex items-center justify-center text-xl cursor-pointer transition-all hover:scale-110 active:scale-95 backdrop-blur-sm"
+          className="bg-black/40 hover:bg-black/80 text-white/80 hover:text-white border border-white/20 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-lg md:text-xl cursor-pointer transition-all active:scale-95 backdrop-blur-md"
           title="เต็มจอ"
         >
           <CornersOut weight="bold" />
@@ -61,19 +61,21 @@ export default function AdsSlider({
 
         <button
           onClick={onOpenSettings}
-          className="bg-black/30 hover:bg-black/80 text-white/50 hover:text-white border border-white/10 w-12 h-12 rounded-full flex items-center justify-center text-xl cursor-pointer transition-all hover:scale-110 active:scale-95 backdrop-blur-sm"
+          className="bg-black/40 hover:bg-black/80 text-white/80 hover:text-white border border-white/20 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-lg md:text-xl cursor-pointer transition-all active:scale-95 backdrop-blur-md"
           title="ตั้งค่า"
         >
           <Gear weight="bold" />
         </button>
       </div>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-50">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2 z-50">
         {images.map((_, idx) => (
           <div
             key={idx}
             className={`h-1 rounded-full transition-all duration-500 ${
-              idx === currentIndex ? "w-8 bg-gold-light" : "w-2 bg-white/30"
+              idx === currentIndex
+                ? "w-6 md:w-8 bg-gold-light"
+                : "w-1.5 md:w-2 bg-white/40"
             }`}
           />
         ))}

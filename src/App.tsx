@@ -6,6 +6,7 @@ import AdminModal from "./components/AdminModal";
 import { APP_CONFIG } from "./config";
 import { useGoldPrice } from "./hooks/useGoldPrice";
 import { CheckCircleIcon, WarningCircleIcon } from "@phosphor-icons/react";
+
 export default function App() {
   const [isSystemReady, setIsSystemReady] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,21 +69,23 @@ export default function App() {
   const displayTime = `ข้อมูลล่าสุด ณ วันที่ ${dateObj.toLocaleDateString("th-TH", { year: "numeric", month: "2-digit", day: "2-digit" })} ${dateObj.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} น.`;
 
   return (
-    <div className="flex w-full h-screen relative font-prompt overflow-hidden">
+    <div className="flex flex-col md:flex-row w-full h-dvh relative font-prompt overflow-hidden">
       {!isSystemReady && (
         <div
           onClick={initSystem}
           className="absolute inset-0 bg-black/90 text-white flex flex-col items-center justify-center z-9999 cursor-pointer"
         >
-          <h2 className="text-gold-light text-3xl mb-4">
+          <h2 className="text-gold-light text-xl md:text-3xl mb-4">
             คลิกที่หน้าจอ 1 ครั้งเพื่อเริ่มใช้งาน
           </h2>
-          <p>(ระบบจำเป็นต้องได้รับการอนุญาตเพื่อเล่นเสียงแจ้งเตือน)</p>
+          <p className="text-sm md:text-base text-center px-4">
+            (ระบบจำเป็นต้องได้รับการอนุญาตเพื่อเล่นเสียงแจ้งเตือน)
+          </p>
         </div>
       )}
 
       <div
-        className="w-1/2 h-full bg-linear-to-br from-primary to-secondary p-[4vh_3vw_0_3vw] flex flex-col justify-start border-r-8 border-gold-dark z-10 transition-opacity duration-300"
+        className="w-full h-[60%] md:w-1/2 md:h-full bg-linear-to-br from-primary to-secondary p-4 md:p-[4vh_3vw_0_3vw] flex flex-col justify-center md:justify-start border-b-4 md:border-b-0 md:border-r-8 border-gold-dark z-10 transition-opacity duration-300"
         style={{ opacity: panelOpacity }}
       >
         <div className="text-center mb-[2vh] flex-none">
@@ -90,18 +93,18 @@ export default function App() {
             <img
               src={APP_CONFIG.STORE_LOGO_URL}
               alt="Store Logo"
-              className="max-h-[12vh] w-auto mx-auto mb-[1vh] drop-shadow-lg"
+              className="max-h-[8vh] md:max-h-[12vh] w-auto mx-auto mb-[1vh] drop-shadow-lg"
             />
           ) : (
-            <div className="text-gold-light text-[clamp(2.5rem,5vh,3.5rem)] font-bold drop-shadow-lg mb-[1vh]">
+            <div className="text-gold-light text-3xl md:text-[clamp(2.5rem,5vh,3.5rem)] font-bold drop-shadow-lg mb-[1vh]">
               GOLDEN99
             </div>
           )}
 
-          <div className="text-white text-[clamp(1.8rem,3.5vh,2.5rem)] font-medium mb-[1vh]">
+          <div className="text-white text-2xl md:text-[clamp(1.8rem,3.5vh,2.5rem)] font-medium mb-[1vh]">
             ราคาทองคำวันนี้
           </div>
-          <div className="text-[#ffcccc] text-[clamp(1rem,2vh,1.2rem)] font-light">
+          <div className="text-[#ffcccc] text-sm md:text-[clamp(1rem,2vh,1.2rem)] font-light">
             {displayTime}
           </div>
         </div>
@@ -132,7 +135,7 @@ export default function App() {
       />
 
       <div
-        className={`fixed top-8 right-8 z-10000 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl text-white font-medium min-w-[320px] ${
+        className={`fixed top-4 right-4 md:top-8 md:right-8 z-10000 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex items-center gap-3 md:gap-4 px-4 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl shadow-2xl text-white font-medium min-w-70 md:min-w-[320px] ${
           toast
             ? "translate-x-0 opacity-100 scale-100"
             : "translate-x-[150%] opacity-0 scale-90"
@@ -140,18 +143,20 @@ export default function App() {
       >
         {toast?.type === "success" ? (
           <CheckCircleIcon
-            size={32}
+            size={28}
             weight="fill"
             className="text-white drop-shadow-md"
           />
         ) : (
           <WarningCircleIcon
-            size={32}
+            size={28}
             weight="fill"
             className="text-white drop-shadow-md"
           />
         )}
-        <span className="text-lg drop-shadow-md">{toast?.message}</span>
+        <span className="text-base md:text-lg drop-shadow-md">
+          {toast?.message}
+        </span>
       </div>
     </div>
   );
