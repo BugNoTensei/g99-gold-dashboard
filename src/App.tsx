@@ -74,8 +74,8 @@ export default function App() {
   const displayTime = `ข้อมูลล่าสุด ณ วันที่ ${dateObj.toLocaleDateString("th-TH", { year: "numeric", month: "2-digit", day: "2-digit" })} ${dateObj.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} น.`;
 
   return (
-    <div className="flex flex-row w-full h-[100dvh] relative font-prompt overflow-hidden bg-black">
-      <div className="portrait:flex landscape:hidden fixed inset-0 z-[99999] bg-black text-white flex-col items-center justify-center p-8 text-center">
+    <div className="flex flex-row fixed inset-0 w-full h-[100dvh] font-prompt overflow-hidden bg-black overscroll-none pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
+      <div className="portrait:flex landscape:hidden fixed inset-0 z-[99999] bg-black text-white flex-col items-center justify-center p-8 text-center overscroll-none">
         <div className="flex items-center justify-center gap-4 mb-6 text-gold-light">
           <DeviceMobileIcon size={64} className="animate-pulse" />
           <ArrowsClockwiseIcon size={48} />
@@ -93,7 +93,7 @@ export default function App() {
       {!isSystemReady && (
         <div
           onClick={initSystem}
-          className="absolute inset-0 bg-black/90 text-white flex flex-col items-center justify-center z-[9999] cursor-pointer"
+          className="absolute inset-0 bg-black/90 text-white flex flex-col items-center justify-center z-[9999] cursor-pointer overscroll-none"
         >
           <h2 className="text-gold-light text-[clamp(1.5rem,4vh,3rem)] mb-4 text-center px-4">
             คลิกหน้าจอ 1 ครั้งเพื่อเริ่มใช้งาน
@@ -121,7 +121,7 @@ export default function App() {
             </div>
           )}
 
-          <div className="text-white text-[clamp(1.8rem,5vh,4rem)] font-medium mb-[0.5vh] leading-tight leading-none tracking-tight md:leading-none">
+          <div className="text-white text-[clamp(1.8rem,5vh,4rem)] font-medium mb-[0.5vh] leading-none tracking-tight">
             ราคาทองคำวันนี้
           </div>
           <div className="text-[#ffcccc] text-[clamp(0.9rem,2.2vh,1.8rem)] font-light mt-[0.5vh] md:mt-[1vh]">
