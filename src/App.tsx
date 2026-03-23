@@ -74,8 +74,8 @@ export default function App() {
   const displayTime = `ข้อมูลล่าสุด ณ วันที่ ${dateObj.toLocaleDateString("th-TH", { year: "numeric", month: "2-digit", day: "2-digit" })} ${dateObj.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} น.`;
 
   return (
-    <div className="flex flex-row w-full h-dvh relative font-prompt overflow-hidden bg-black">
-      <div className="portrait:flex landscape:hidden fixed inset-0 z-99999 bg-black text-white flex-col items-center justify-center p-8 text-center">
+    <div className="flex flex-row w-full h-[100dvh] relative font-prompt overflow-hidden bg-black">
+      <div className="portrait:flex landscape:hidden fixed inset-0 z-[99999] bg-black text-white flex-col items-center justify-center p-8 text-center">
         <div className="flex items-center justify-center gap-4 mb-6 text-gold-light">
           <DeviceMobileIcon size={64} className="animate-pulse" />
           <ArrowsClockwiseIcon size={48} />
@@ -85,25 +85,27 @@ export default function App() {
         </h2>
         <p className="text-lg text-gray-300">
           ระบบถูกออกแบบมาเพื่อแสดงผลแนวนอนเท่านั้น
+          <br />
+          กรุณาหมุนโทรศัพท์ของคุณเพื่อใช้งาน
         </p>
       </div>
 
       {!isSystemReady && (
         <div
           onClick={initSystem}
-          className="absolute inset-0 bg-black/90 text-white flex flex-col items-center justify-center z-9999 cursor-pointer"
+          className="absolute inset-0 bg-black/90 text-white flex flex-col items-center justify-center z-[9999] cursor-pointer"
         >
-          <h2 className="text-gold-light text-[4vh] mb-[2vh] text-center px-4">
+          <h2 className="text-gold-light text-[clamp(1.5rem,4vh,3rem)] mb-4 text-center px-4">
             คลิกหน้าจอ 1 ครั้งเพื่อเริ่มใช้งาน
           </h2>
-          <p className="text-[2vh] text-center px-4 text-gray-300">
+          <p className="text-[clamp(1rem,2vh,1.5rem)] text-center px-4 text-gray-300">
             (ระบบต้องการรับการอนุญาตเพื่อเล่นเสียงแจ้งเตือน)
           </p>
         </div>
       )}
 
       <div
-        className="w-1/2 h-full bg-linear-to-br from-primary to-secondary p-[2vh_2vw] flex flex-col justify-center gap-[2vh] border-r-[0.5vw] border-gold-dark z-10 transition-opacity duration-300"
+        className="w-1/2 h-full bg-linear-to-br from-primary to-secondary p-[clamp(1rem,4vh,6rem)] flex flex-col justify-evenly border-r-8 border-gold-dark z-10 transition-opacity duration-300"
         style={{ opacity: panelOpacity }}
       >
         <div className="text-center flex-none">
@@ -111,33 +113,33 @@ export default function App() {
             <img
               src={APP_CONFIG.STORE_LOGO_URL}
               alt="Store Logo"
-              className="max-h-[10vh] w-auto mx-auto mb-[1vh] drop-shadow-lg"
+              className="max-h-[clamp(60px,15vh,180px)] w-auto mx-auto mb-[1vh] drop-shadow-lg"
             />
           ) : (
-            <div className="text-gold-light text-[4.5vh] font-bold drop-shadow-lg mb-[1vh]">
+            <div className="text-gold-light text-[clamp(2.5rem,7vh,6rem)] font-bold drop-shadow-lg mb-[1vh]">
               GOLDEN99
             </div>
           )}
 
-          <div className="text-white text-[3.5vh] font-medium mb-[0.5vh] leading-tight">
+          <div className="text-white text-[clamp(1.8rem,5vh,4rem)] font-medium mb-[0.5vh] leading-tight leading-none tracking-tight md:leading-none">
             ราคาทองคำวันนี้
           </div>
-          <div className="text-[#ffcccc] text-[1.5vh] font-light">
+          <div className="text-[#ffcccc] text-[clamp(0.9rem,2.2vh,1.8rem)] font-light mt-[0.5vh] md:mt-[1vh]">
             {displayTime}
           </div>
         </div>
 
-        <div className="flex-none">
+        <div className="flex-none w-full px-[5vw] flex flex-col gap-[2vh] md:gap-[3vh] landscape:px-[1vw] landscape:gap-[1vh]">
           <PriceCategory title="ทองคำแท่ง">
             <PriceRow label="รับซื้อ" type="buy" price={prices.barBuy} />
             <PriceRow label="ขายออก" type="sell" price={prices.barSale} />
           </PriceCategory>
-        </div>
 
-        <div className="flex-none">
-          <PriceCategory title="ทองรูปพรรณ">
-            <PriceRow label="รับซื้อ" type="buy" price={prices.ornaReturn} />
-          </PriceCategory>
+          <div className="mt-[2vh] md:mt-[4vh] landscape:mt-[1vh]">
+            <PriceCategory title="ทองรูปพรรณ">
+              <PriceRow label="รับซื้อ" type="buy" price={prices.ornaReturn} />
+            </PriceCategory>
+          </div>
         </div>
       </div>
 
@@ -159,7 +161,7 @@ export default function App() {
       />
 
       <div
-        className={`fixed top-[4vh] right-[2vw] z-10000 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex items-center gap-[1vw] px-[2vw] py-[2vh] rounded-2xl shadow-2xl text-white font-medium min-w-[320px] ${
+        className={`fixed top-8 right-8 z-[10000] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl text-white font-medium min-w-[320px] ${
           toast
             ? "translate-x-0 opacity-100 scale-100"
             : "translate-x-[150%] opacity-0 scale-90"
@@ -178,7 +180,7 @@ export default function App() {
             className="text-white drop-shadow-md"
           />
         )}
-        <span className="text-[2.5vh] drop-shadow-md">{toast?.message}</span>
+        <span className="text-xl drop-shadow-md">{toast?.message}</span>
       </div>
     </div>
   );
