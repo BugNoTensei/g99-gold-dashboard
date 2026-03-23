@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import PriceCategory from "./components/PriceCategory";
 import PriceRow from "./components/PriceRow";
 import AdsSlider from "./components/AdsSlider";
@@ -21,11 +21,15 @@ export default function App() {
     type: "success" | "error";
   } | null>(null);
 
-  const audioRef = useRef(
-    new Audio(
-      "https://actions.google.com/sounds/v1/alarms/dinner_bell_triangle.ogg",
-    ),
-  );
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      audioRef.current = new Audio(
+        "https://actions.google.com/sounds/v1/alarms/dinner_bell_triangle.ogg",
+      );
+    }
+  }, []);
 
   const showToast = (
     message: string,
@@ -36,7 +40,10 @@ export default function App() {
   };
 
   const handlePriceChange = () => {
-    audioRef.current.play().catch(() => {});
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
     setPanelOpacity(0.7);
     setTimeout(() => setPanelOpacity(1), 300);
   };
@@ -50,13 +57,20 @@ export default function App() {
     if (document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen().catch(() => {});
     }
-    audioRef.current
-      .play()
-      .then(() => {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      })
-      .catch(() => {});
+
+    if (audioRef.current) {
+      audioRef.current.volume = 0;
+      audioRef.current
+        .play()
+        .then(() => {
+          audioRef.current?.pause();
+          if (audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.volume = 1;
+          }
+        })
+        .catch(() => {});
+    }
 
     setIsSystemReady(true);
     fetchPrice();
@@ -74,8 +88,8 @@ export default function App() {
   const displayTime = `ข้อมูลล่าสุด ณ วันที่ ${dateObj.toLocaleDateString("th-TH", { year: "numeric", month: "2-digit", day: "2-digit" })} ${dateObj.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} น.`;
 
   return (
-    <div className="flex flex-row w-full h-[100dvh] relative font-prompt overflow-hidden bg-black overscroll-none pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
-      <div className="portrait:flex landscape:hidden fixed inset-0 z-[99999] bg-black text-white flex-col items-center justify-center p-8 text-center overscroll-none">
+    <div className="flex flex-row w-full h-dvh relative font-prompt overflow-hidden bg-black overscroll-none pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
+      <div className="portrait:flex landscape:hidden fixed inset-0 z-99999 bg-black text-white flex-col items-center justify-center p-8 text-center overscroll-none">
         <div className="flex items-center justify-center gap-4 mb-6 text-gold-light">
           <DeviceMobileIcon size={64} className="animate-pulse" />
           <ArrowsClockwiseIcon size={48} />
@@ -93,7 +107,7 @@ export default function App() {
       {!isSystemReady && (
         <div
           onClick={initSystem}
-          className="absolute inset-0 bg-black/90 text-white flex flex-col items-center justify-center z-[9999] cursor-pointer overscroll-none"
+          className="absolute inset-0 bg-black/90 text-white flex flex-col items-center justify-center z-9999 cursor-pointer overscroll-none"
         >
           <h2 className="text-gold-light text-[clamp(1.5rem,4vh,3rem)] mb-4 text-center px-4">
             คลิกหน้าจอ 1 ครั้งเพื่อเริ่มใช้งาน
@@ -121,7 +135,7 @@ export default function App() {
             </div>
           )}
 
-          <div className="text-white text-[clamp(1.2rem,3.5vh,3rem)] font-medium mb-[0.5vh] leading-tight leading-none tracking-tight md:text-[clamp(1.8rem,5vh,4rem)]">
+          <div className="text-white text-[clamp(1.2rem,3.5vh,3rem)] font-medium mb-[0.5vh] leading-none tracking-tight md:text-[clamp(1.8rem,5vh,4rem)]">
             ราคาทองคำวันนี้
           </div>
           <div className="text-[#ffcccc] text-[clamp(0.6rem,1.5vh,1.2rem)] font-light mt-[0.5vh] md:text-[clamp(0.9rem,2.2vh,1.8rem)] md:mt-[1vh]">
@@ -161,7 +175,7 @@ export default function App() {
       />
 
       <div
-        className={`fixed top-8 right-8 z-[10000] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl text-white font-medium min-w-[320px] ${
+        className={`fixed top-8 right-8 z-10000 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl text-white font-medium min-w-[320px] ${
           toast
             ? "translate-x-0 opacity-100 scale-100"
             : "translate-x-[150%] opacity-0 scale-90"
