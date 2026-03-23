@@ -1,11 +1,17 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import PriceCategory from "./components/PriceCategory";
 import PriceRow from "./components/PriceRow";
 import AdsSlider from "./components/AdsSlider";
 import AdminModal from "./components/AdminModal";
 import { APP_CONFIG } from "./config";
 import { useGoldPrice } from "./hooks/useGoldPrice";
-import { CheckCircleIcon, WarningCircleIcon } from "@phosphor-icons/react";
+import {
+  CheckCircleIcon,
+  WarningCircleIcon,
+  DeviceMobileIcon,
+  ArrowsClockwiseIcon,
+} from "@phosphor-icons/react";
+
 export default function App() {
   const [isSystemReady, setIsSystemReady] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,11 +21,15 @@ export default function App() {
     type: "success" | "error";
   } | null>(null);
 
-  const audioRef = useRef(
-    new Audio(
-      "https://actions.google.com/sounds/v1/alarms/dinner_bell_triangle.ogg",
-    ),
-  );
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      audioRef.current = new Audio(
+        "https://actions.google.com/sounds/v1/alarms/dinner_bell_triangle.ogg",
+      );
+    }
+  }, []);
 
   const showToast = (
     message: string,
@@ -30,7 +40,10 @@ export default function App() {
   };
 
   const handlePriceChange = () => {
-    audioRef.current.play().catch(() => {});
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
     setPanelOpacity(0.7);
     setTimeout(() => setPanelOpacity(1), 300);
   };
@@ -44,13 +57,20 @@ export default function App() {
     if (document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen().catch(() => {});
     }
-    audioRef.current
-      .play()
-      .then(() => {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      })
-      .catch(() => {});
+
+    if (audioRef.current) {
+      audioRef.current.muted = true;
+      audioRef.current
+        .play()
+        .then(() => {
+          audioRef.current?.pause();
+          if (audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.muted = false;
+          }
+        })
+        .catch(() => {});
+    }
 
     setIsSystemReady(true);
     fetchPrice();
@@ -68,60 +88,81 @@ export default function App() {
   const displayTime = `ข้อมูลล่าสุด ณ วันที่ ${dateObj.toLocaleDateString("th-TH", { year: "numeric", month: "2-digit", day: "2-digit" })} ${dateObj.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} น.`;
 
   return (
-    <div className="flex w-full h-screen relative font-prompt overflow-hidden">
+    <div className="flex flex-row w-full h-dvh relative font-prompt overflow-hidden bg-black overscroll-none pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
+      <div className="portrait:flex landscape:hidden fixed inset-0 z-99999 bg-black text-white flex-col items-center justify-center p-8 text-center overscroll-none">
+        <div className="flex items-center justify-center gap-4 mb-6 text-gold-light">
+          <DeviceMobileIcon size={64} className="animate-pulse" />
+          <ArrowsClockwiseIcon size={48} />
+        </div>
+        <h2 className="text-3xl font-bold text-gold-light mb-4">
+          โปรดหมุนหน้าจอเป็นแนวนอน
+        </h2>
+        <p className="text-lg text-gray-300">
+          ระบบถูกออกแบบมาเพื่อแสดงผลแนวนอนเท่านั้น
+        </p>
+      </div>
+
       {!isSystemReady && (
         <div
           onClick={initSystem}
-          className="absolute inset-0 bg-black/90 text-white flex flex-col items-center justify-center z-9999 cursor-pointer"
+          className="absolute inset-0 bg-black/90 text-white flex flex-col items-center justify-center z-9999 cursor-pointer overscroll-none"
         >
-          <h2 className="text-gold-light text-3xl mb-4">
-            คลิกที่หน้าจอ 1 ครั้งเพื่อเริ่มใช้งาน
+          <h2 className="text-gold-light text-[clamp(1.5rem,4vh,3rem)] mb-4 text-center px-4">
+            คลิกหน้าจอ 1 ครั้งเพื่อเริ่มใช้งาน
           </h2>
-          <p>(ระบบจำเป็นต้องได้รับการอนุญาตเพื่อเล่นเสียงแจ้งเตือน)</p>
+          <p className="text-[clamp(1rem,2vh,1.5rem)] text-center px-4 text-gray-300">
+            (ระบบต้องการรับการอนุญาตเพื่อเล่นเสียงแจ้งเตือน)
+          </p>
         </div>
       )}
 
       <div
-        className="w-1/2 h-full bg-linear-to-br from-primary to-secondary p-[4vh_3vw_0_3vw] flex flex-col justify-start border-r-8 border-gold-dark z-10 transition-opacity duration-300"
+        className="w-1/2 h-full bg-linear-to-br from-primary to-secondary p-[2vh_2vw] flex flex-col justify-center gap-[2vh] border-r-8 border-gold-dark z-10 transition-opacity duration-300 md:p-[clamp(1rem,4vh,6rem)] md:justify-evenly"
         style={{ opacity: panelOpacity }}
       >
-        <div className="text-center mb-[2vh] flex-none">
+        <div className="text-center flex-none">
           {APP_CONFIG.STORE_LOGO_URL ? (
             <img
               src={APP_CONFIG.STORE_LOGO_URL}
               alt="Store Logo"
-              className="max-h-[12vh] w-auto mx-auto mb-[1vh] drop-shadow-lg"
+              className="max-h-[clamp(40px,10vh,120px)] w-auto mx-auto mb-[0.5vh] drop-shadow-lg md:max-h-[clamp(60px,15vh,180px)]"
             />
           ) : (
-            <div className="text-gold-light text-[clamp(2.5rem,5vh,3.5rem)] font-bold drop-shadow-lg mb-[1vh]">
+            <div className="text-gold-light text-[clamp(1.5rem,4vh,4rem)] font-bold drop-shadow-lg mb-[0.5vh] md:text-[clamp(2.5rem,7vh,6rem)]">
               GOLDEN99
             </div>
           )}
 
-          <div className="text-white text-[clamp(1.8rem,3.5vh,2.5rem)] font-medium mb-[1vh]">
+          <div className="text-white text-[clamp(1.2rem,3.5vh,3rem)] font-medium mb-[0.5vh] leading-none tracking-tight md:text-[clamp(1.8rem,5vh,4rem)]">
             ราคาทองคำวันนี้
           </div>
-          <div className="text-[#ffcccc] text-[clamp(1rem,2vh,1.2rem)] font-light">
+          <div className="text-[#ffcccc] text-[clamp(0.6rem,1.5vh,1.2rem)] font-light mt-[0.5vh] md:text-[clamp(0.9rem,2.2vh,1.8rem)] md:mt-[1vh]">
             {displayTime}
           </div>
         </div>
 
-        <PriceCategory title="ทองคำแท่ง">
-          <PriceRow label="รับซื้อ" type="buy" price={prices.barBuy} />
-          <PriceRow label="ขายออก" type="sell" price={prices.barSale} />
-        </PriceCategory>
+        <div className="flex-none w-full px-[5vw] flex flex-col gap-[2vh] md:gap-[3vh] landscape:px-[1vw] landscape:gap-[1vh]">
+          <PriceCategory title="ทองคำแท่ง">
+            <PriceRow label="รับซื้อ" type="buy" price={prices.barBuy} />
+            <PriceRow label="ขายออก" type="sell" price={prices.barSale} />
+          </PriceCategory>
 
-        <PriceCategory title="ทองรูปพรรณ">
-          <PriceRow label="รับซื้อ" type="buy" price={prices.ornaReturn} />
-        </PriceCategory>
+          <div className="mt-0 md:mt-[4vh] landscape:mt-[1vh]">
+            <PriceCategory title="ทองรูปพรรณ">
+              <PriceRow label="รับซื้อ" type="buy" price={prices.ornaReturn} />
+            </PriceCategory>
+          </div>
+        </div>
       </div>
 
-      <AdsSlider
-        images={APP_CONFIG.ADS_IMAGES}
-        interval={APP_CONFIG.SLIDER_INTERVAL_MS}
-        onOpenSettings={() => setIsModalOpen(true)}
-        onToggleFullscreen={handleToggleFullscreen}
-      />
+      <div className="w-1/2 h-full relative bg-black">
+        <AdsSlider
+          images={APP_CONFIG.ADS_IMAGES}
+          interval={APP_CONFIG.SLIDER_INTERVAL_MS}
+          onOpenSettings={() => setIsModalOpen(true)}
+          onToggleFullscreen={handleToggleFullscreen}
+        />
+      </div>
 
       <AdminModal
         isOpen={isModalOpen}
@@ -151,7 +192,9 @@ export default function App() {
             className="text-white drop-shadow-md"
           />
         )}
-        <span className="text-lg drop-shadow-md">{toast?.message}</span>
+        <span className="text-xl drop-shadow-md md:text-xl">
+          {toast?.message}
+        </span>
       </div>
     </div>
   );

@@ -1,5 +1,3 @@
-import React from "react";
-
 interface Props {
   title: string;
   children: React.ReactNode;
@@ -7,11 +5,11 @@ interface Props {
 
 export default function PriceCategory({ title, children }: Props) {
   return (
-    <div className="mb-[2vh] flex-1 flex flex-col justify-center">
-      <div className="text-gold-light text-[clamp(1.8rem,3.5vh,2.2rem)] font-semibold text-center mb-[2vh] drop-shadow-md">
+    <div className="mb-[1vh]">
+      <h3 className="text-gold-light text-[clamp(1.2rem,3vh,2.5rem)] font-bold text-center mb-[1vh] drop-shadow-md landscape:text-[clamp(1.2rem,3vh,2.5rem)] md:text-[clamp(1.6rem,4vh,3.5rem)] md:mb-[1.5vh]">
         {title}
-      </div>
-      {children}
+      </h3>
+      <div className="flex flex-col">{children}</div>
     </div>
   );
 }

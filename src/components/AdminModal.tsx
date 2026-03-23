@@ -63,14 +63,14 @@ export default function AdminModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-1000 flex items-center justify-center backdrop-blur-sm">
-      <div className="bg-white p-10 rounded-[20px] w-125 shadow-2xl">
-        <h2 className="text-primary text-center text-2xl font-bold mb-6">
+    <div className="fixed inset-0 bg-black/80 z-1000 flex items-center justify-center backdrop-blur-sm p-4">
+      <div className="bg-white p-6 md:p-8 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
+        <h2 className="text-primary text-center text-lg md:text-2xl font-bold mb-5 md:mb-6">
           ตั้งค่าราคาทองคำด้วยตนเอง
         </h2>
 
-        <div className="mb-5">
-          <label className="block mb-2 font-semibold text-gray-700">
+        <div className="mb-4">
+          <label className="block mb-1 text-xs md:text-base font-semibold text-gray-700">
             รับซื้อ ทองคำแท่ง
           </label>
           <input
@@ -79,11 +79,11 @@ export default function AdminModal({
             onChange={(e) =>
               setFormData({ ...formData, barBuy: e.target.value })
             }
-            className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-primary outline-none"
+            className="w-full p-2.5 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-primary outline-none"
           />
         </div>
-        <div className="mb-5">
-          <label className="block mb-2 font-semibold text-gray-700">
+        <div className="mb-4">
+          <label className="block mb-1 text-xs md:text-base font-semibold text-gray-700">
             ขายออก ทองคำแท่ง
           </label>
           <input
@@ -92,34 +92,35 @@ export default function AdminModal({
             onChange={(e) =>
               setFormData({ ...formData, barSale: e.target.value })
             }
-            className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-primary outline-none"
+            className="w-full p-2.5 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-primary outline-none"
           />
         </div>
-        <div className="mb-5">
-          <label className="block mb-2 font-semibold text-gray-700">
+        <div className="mb-6">
+          <label className="block mb-1 text-xs md:text-base font-semibold text-gray-700">
             รับซื้อ ทองรูปพรรณ (ไม่จำเป็นต้องกรอก)
           </label>
           <input
             type="number"
+            value={formData.ornaReturn}
             onChange={(e) =>
               setFormData({ ...formData, ornaReturn: e.target.value })
             }
-            className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-primary outline-none"
-            placeholder="ระบบจะคำนวณให้โดยอัตโนมัติจากราคาทองแท่ง"
+            className="w-full p-2.5 text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-primary outline-none"
+            placeholder="ระบบจะคำนวณให้โดยอัตโนมัติ"
           />
         </div>
 
-        <div className="flex justify-end gap-4 mt-8">
+        <div className="flex justify-end gap-3 md:gap-4 mt-6 md:mt-8">
           <button
             onClick={onClose}
-            className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-colors"
+            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs md:text-base font-semibold rounded-lg transition-colors"
           >
             ยกเลิก
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSaving}
-            className="px-6 py-3 bg-primary hover:bg-secondary text-white font-semibold rounded-lg transition-colors"
+            className="px-4 py-2 bg-primary hover:bg-secondary text-white text-xs md:text-base font-semibold rounded-lg transition-colors"
           >
             {isSaving ? "กำลังบันทึก..." : "บันทึกข้อมูล"}
           </button>

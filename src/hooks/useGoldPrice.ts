@@ -26,6 +26,9 @@ export function useGoldPrice(
   const fetchPrice = useCallback(async () => {
     try {
       const data = await getGoldPrices();
+
+      if (!data || !data.barBuy || data.barBuy <= 0) return;
+
       const newDataStr = `${data.barBuy}-${data.barSale}-${data.ornaReturn}`;
 
       if (prevPriceStr.current && prevPriceStr.current !== newDataStr) {
@@ -34,19 +37,15 @@ export function useGoldPrice(
 
       prevPriceStr.current = newDataStr;
       setPrices(data);
-    } catch (error) {
-      console.error(error);
+    } catch {
+      /* ignore fetch errors to prevent UI disruption */
     }
   }, []);
 
+  // ลบ try...catch ที่ไม่จำเป็นออก เพื่อให้ Error ลอยไปหาคนเรียกใช้ (AdminModal) เลยตรงๆ
   const handleSavePrice = async (payload: GoldPrices) => {
-    try {
-      await updateGoldPrices(payload);
-      fetchPrice();
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
+    await updateGoldPrices(payload);
+    fetchPrice();
   };
 
   useEffect(() => {
