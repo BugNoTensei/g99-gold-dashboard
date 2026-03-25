@@ -2,6 +2,7 @@ import axios from "axios";
 import { supabase } from "../config/supabase";
 
 const API_URL = import.meta.env.VITE_API_URL;
+const PIN = import.meta.env.VITE_UPDATE_PIN;
 
 export interface GoldPrices {
   barBuy: number;
@@ -17,15 +18,15 @@ export const getGoldPrices = async (): Promise<GoldPrices> => {
 
 export const updateGoldPrices = async (payload: GoldPrices) => {
   await axios.post(API_URL, payload);
+
   if (supabase) {
-    await supabase.from("gold_prices").insert([
-      {
-        source: "G99_Dashboard",
-        bar_buy: payload.barBuy,
-        bar_sell: payload.barSale,
-        ornament_buy: payload.ornaReturn,
-        update_time: new Date().toISOString(),
-      },
-    ]);
+    const { error } = await supabase.rpc("insert_gold_prices_secure", {
+      p_bar_buy: payload.barBuy,
+      p_bar_sell: payload.barSale,
+      p_ornament_buy: payload.ornaReturn,
+      p_pin: PIN,
+    });
+
+    if (error) throw error;
   }
 };

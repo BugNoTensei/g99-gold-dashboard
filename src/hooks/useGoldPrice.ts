@@ -15,7 +15,7 @@ export function useGoldPrice(
     barSale: 0,
     ornaReturn: 0,
   });
-  const prevPriceStr = useRef<string>("");
+  const lastUpdateKey = useRef<string>("");
   const realtimeTimeout = useRef<number | null>(null);
   const onPriceUpdatedRef = useRef(onPriceUpdated);
 
@@ -29,20 +29,23 @@ export function useGoldPrice(
 
       if (!data || !data.barBuy || data.barBuy <= 0) return;
 
-      const newDataStr = `${data.barBuy}-${data.barSale}-${data.ornaReturn}`;
+      const currentKey =
+        data.priceAt || `${data.barBuy}-${data.barSale}-${data.ornaReturn}`;
 
-      if (prevPriceStr.current && prevPriceStr.current !== newDataStr) {
+      if (
+        lastUpdateKey.current !== "" &&
+        lastUpdateKey.current !== currentKey
+      ) {
         if (onPriceUpdatedRef.current) onPriceUpdatedRef.current();
       }
 
-      prevPriceStr.current = newDataStr;
+      lastUpdateKey.current = currentKey;
       setPrices(data);
     } catch {
-      /* ignore fetch errors to prevent UI disruption */
+      /* ignore */
     }
   }, []);
 
-  // ลบ try...catch ที่ไม่จำเป็นออก เพื่อให้ Error ลอยไปหาคนเรียกใช้ (AdminModal) เลยตรงๆ
   const handleSavePrice = async (payload: GoldPrices) => {
     await updateGoldPrices(payload);
     fetchPrice();
