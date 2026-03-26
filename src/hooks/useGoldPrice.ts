@@ -15,6 +15,12 @@ export function useGoldPrice(
     barSale: 0,
     ornaReturn: 0,
   });
+
+  const [isAutoFetch, setIsAutoFetch] = useState<boolean>(() => {
+    const saved = localStorage.getItem("autoFetchGold");
+    return saved !== null ? saved === "true" : true;
+  });
+
   const lastUpdateKey = useRef<string>("");
   const realtimeTimeout = useRef<number | null>(null);
   const onPriceUpdatedRef = useRef(onPriceUpdated);
@@ -23,10 +29,13 @@ export function useGoldPrice(
     onPriceUpdatedRef.current = onPriceUpdated;
   }, [onPriceUpdated]);
 
+  useEffect(() => {
+    localStorage.setItem("autoFetchGold", String(isAutoFetch));
+  }, [isAutoFetch]);
+
   const fetchPrice = useCallback(async () => {
     try {
       const data = await getGoldPrices();
-
       if (!data || !data.barBuy || data.barBuy <= 0) return;
 
       const currentKey =
@@ -41,20 +50,38 @@ export function useGoldPrice(
 
       lastUpdateKey.current = currentKey;
       setPrices(data);
-    } catch {
-      /* ignore */
+    } catch (error) {
+      console.error(error);
     }
   }, []);
 
   const handleSavePrice = async (payload: GoldPrices) => {
     await updateGoldPrices(payload);
+
+    try {
+      await fetch("https://g99pawnpay.golden99.co.th/gold-price", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          barSale: Number(payload.barSale),
+          barBuy: Number(payload.barBuy),
+        }),
+      });
+    } catch (error) {
+      console.error(error);
+    }
+
     fetchPrice();
   };
 
   useEffect(() => {
     if (!isSystemReady) return;
 
-    const interval = window.setInterval(fetchPrice, 300000);
+    let interval: number | undefined;
+
+    if (isAutoFetch) {
+      interval = window.setInterval(fetchPrice, 300000);
+    }
 
     if (supabase) {
       const channel = supabase
@@ -74,14 +101,15 @@ export function useGoldPrice(
         .subscribe();
 
       return () => {
-        window.clearInterval(interval);
-        if (channel) {
-          supabase?.removeChannel(channel);
-        }
+        if (interval) window.clearInterval(interval);
+        if (channel) supabase?.removeChannel(channel);
       };
     }
-    return () => window.clearInterval(interval);
-  }, [isSystemReady, fetchPrice]);
 
-  return { prices, fetchPrice, handleSavePrice };
+    return () => {
+      if (interval) window.clearInterval(interval);
+    };
+  }, [isSystemReady, isAutoFetch, fetchPrice]);
+
+  return { prices, fetchPrice, handleSavePrice, isAutoFetch, setIsAutoFetch };
 }

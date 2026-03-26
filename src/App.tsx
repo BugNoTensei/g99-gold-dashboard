@@ -48,10 +48,8 @@ export default function App() {
     setTimeout(() => setPanelOpacity(1), 300);
   };
 
-  const { prices, fetchPrice, handleSavePrice } = useGoldPrice(
-    isSystemReady,
-    handlePriceChange,
-  );
+  const { prices, fetchPrice, handleSavePrice, isAutoFetch, setIsAutoFetch } =
+    useGoldPrice(isSystemReady, handlePriceChange);
 
   const initSystem = () => {
     if (document.documentElement.requestFullscreen) {
@@ -170,6 +168,8 @@ export default function App() {
         currentPrices={prices}
         onSave={handleSavePrice}
         onShowToast={showToast}
+        isAutoFetch={isAutoFetch}
+        onToggleAutoFetch={setIsAutoFetch}
       />
 
       <div

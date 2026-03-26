@@ -7,6 +7,8 @@ interface Props {
   currentPrices: GoldPrices;
   onSave: (payload: GoldPrices) => Promise<void>;
   onShowToast: (msg: string, type: "success" | "error") => void;
+  isAutoFetch: boolean;
+  onToggleAutoFetch: (status: boolean) => void;
 }
 
 export default function AdminModal({
@@ -15,6 +17,8 @@ export default function AdminModal({
   currentPrices,
   onSave,
   onShowToast,
+  isAutoFetch,
+  onToggleAutoFetch,
 }: Props) {
   const [formData, setFormData] = useState({
     barBuy: "",
@@ -69,6 +73,27 @@ export default function AdminModal({
           ตั้งค่าราคาทองคำด้วยตนเอง
         </h2>
 
+        <div className="flex items-center justify-between mb-6 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div>
+            <h3 className="text-sm md:text-base font-bold text-gray-800">
+              ดึงราคาอัตโนมัติ
+            </h3>
+            <p className="text-xs text-gray-500">อัปเดตจากสมาคมฯ ทุก 5 นาที</p>
+          </div>
+          <button
+            onClick={() => onToggleAutoFetch(!isAutoFetch)}
+            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none ${
+              isAutoFetch ? "bg-green-500" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                isAutoFetch ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+
         <div className="mb-4">
           <label className="block mb-1 text-xs md:text-base font-semibold text-gray-700">
             รับซื้อ ทองคำแท่ง
@@ -101,6 +126,7 @@ export default function AdminModal({
           </label>
           <input
             type="number"
+            value={formData.ornaReturn}
             onChange={(e) =>
               setFormData({ ...formData, ornaReturn: e.target.value })
             }
