@@ -126,7 +126,6 @@ export default function AdminModal({
           </label>
           <input
             type="number"
-            value={formData.ornaReturn}
             onChange={(e) =>
               setFormData({ ...formData, ornaReturn: e.target.value })
             }

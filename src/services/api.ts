@@ -9,6 +9,7 @@ export interface GoldPrices {
   barSale: number;
   ornaReturn: number;
   priceAt?: string;
+  update_time?: string;
 }
 
 export const getGoldPrices = async (): Promise<GoldPrices> => {
