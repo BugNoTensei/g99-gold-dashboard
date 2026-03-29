@@ -48,8 +48,16 @@ export default function App() {
     setTimeout(() => setPanelOpacity(1), 300);
   };
 
-  const { prices, fetchPrice, handleSavePrice, isAutoFetch, setIsAutoFetch } =
-    useGoldPrice(isSystemReady, handlePriceChange);
+  const {
+    prices,
+    fetchPrice,
+    isAutoFetch,
+    setIsAutoFetch,
+    isUsingLocal,
+    saveBranchPrice,
+    saveAdminPrice,
+    clearLocalPrice,
+  } = useGoldPrice(isSystemReady, handlePriceChange);
 
   const initSystem = () => {
     if (document.documentElement.requestFullscreen) {
@@ -167,12 +175,14 @@ export default function App() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         currentPrices={prices}
-        onSave={handleSavePrice}
         onShowToast={showToast}
         isAutoFetch={isAutoFetch}
         onToggleAutoFetch={setIsAutoFetch}
+        saveBranchPrice={saveBranchPrice}
+        saveAdminPrice={saveAdminPrice}
+        clearLocalPrice={clearLocalPrice}
+        isUsingLocal={isUsingLocal}
       />
-
       <div
         className={`fixed top-8 right-8 z-10000 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl text-white font-medium min-w-[320px] ${
           toast
