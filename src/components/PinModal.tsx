@@ -95,8 +95,15 @@ export default function PinModal({
                 ระบุรหัสผ่านเพื่อเข้าสู่หน้าตั้งค่าราคา
               </p>
             </div>
-
             <form className="mt-6 space-y-4" onSubmit={handleLogin}>
+              <input
+                type="text"
+                name="username"
+                autoComplete="username"
+                defaultValue="g99_user"
+                style={{ display: "none" }}
+                aria-hidden="true"
+              />
               <input
                 type="password"
                 required
