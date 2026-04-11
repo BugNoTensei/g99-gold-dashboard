@@ -126,7 +126,7 @@ export default function App() {
     : "กำลังอัปเดตข้อมูล...";
 
   return (
-    <div className="flex flex-row w-full h-dvh relative font-prompt overflow-hidden bg-black overscroll-none pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
+    <main className="flex flex-row w-full h-dvh relative font-prompt overflow-hidden bg-black overscroll-none pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
       {userRole && (
         <div className="absolute top-4 left-4 z-50 flex items-center gap-3 bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg transition-all">
           <div className="flex items-center gap-2">
@@ -284,6 +284,6 @@ export default function App() {
         )}
         <span className="text-xl drop-shadow-md">{toast?.message}</span>
       </div>
-    </div>
+    </main>
   );
 }

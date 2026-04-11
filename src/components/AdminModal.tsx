@@ -155,7 +155,7 @@ export default function AdminModal({
                   </div>
                   <button
                     onClick={onClose}
-                    className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600 transition-colors"
+                    className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-red-600 transition-colors"
                   >
                     <XIcon size={24} weight="bold" />
                   </button>
@@ -168,7 +168,7 @@ export default function AdminModal({
                     <span className="text-sm font-semibold text-gray-900">
                       การซิงค์ข้อมูลอัตโนมัติ
                     </span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-600">
                       {isAutoFetch
                         ? "กำลังอัปเดตจากสมาคมค้าทองคำ"
                         : "ปิดการซิงค์ (กำหนดราคาเอง)"}
@@ -227,7 +227,7 @@ export default function AdminModal({
                       className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 focus:outline-none ${
                         saveMode === "branch"
                           ? "bg-white text-gray-950 shadow ring-1 ring-gray-900/5"
-                          : "text-gray-500 hover:text-gray-800"
+                          : "text-gray-600 hover:text-gray-800"
                       }`}
                     >
                       ปรับราคาสาขา
@@ -237,7 +237,7 @@ export default function AdminModal({
                       className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 focus:outline-none ${
                         saveMode === "admin"
                           ? "bg-white text-red-600 shadow ring-1 ring-red-900/5"
-                          : "text-gray-500 hover:text-red-700 hover:bg-white/50"
+                          : "text-gray-600 hover:text-red-700 hover:bg-white/50"
                       }`}
                     >
                       ประกาศราคากลาง (Admin)
@@ -266,13 +266,13 @@ export default function AdminModal({
                         }
                         className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${
                           isAutoFetch && userRole !== "admin"
-                            ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                            ? "bg-gray-100 text-gray-600 cursor-not-allowed"
                             : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"
                         }`}
                         placeholder="0"
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                        <span className="text-sm font-medium text-gray-500">
+                        <span className="text-sm font-medium text-gray-600">
                           บาท
                         </span>
                       </div>
@@ -293,13 +293,13 @@ export default function AdminModal({
                         }
                         className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${
                           isAutoFetch && userRole !== "admin"
-                            ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                            ? "bg-gray-100 text-gray-600 cursor-not-allowed"
                             : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"
                         }`}
                         placeholder="0"
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                        <span className="text-sm font-medium text-gray-500">
+                        <span className="text-sm font-medium text-gray-600">
                           บาท
                         </span>
                       </div>
@@ -320,13 +320,13 @@ export default function AdminModal({
                         }
                         className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${
                           isAutoFetch && userRole !== "admin"
-                            ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                            ? "bg-gray-100 text-gray-600 cursor-not-allowed"
                             : "bg-gray-50 text-gray-950 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-red-600"
                         }`}
                         placeholder="ระบบจะคำนวณอัตโนมัติหากเว้นว่าง"
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                        <span className="text-sm font-medium text-gray-500">
+                        <span className="text-sm font-medium text-gray-600">
                           บาท
                         </span>
                       </div>
@@ -343,7 +343,7 @@ export default function AdminModal({
                         </p>
                       </div>
                     ) : (
-                      <p className="mt-2 text-xs text-gray-500">
+                      <p className="mt-2 text-xs text-gray-600">
                         หากเว้นว่าง ระบบ API จะคำนวณราคาให้โดยอัตโนมัติ
                       </p>
                     )}
