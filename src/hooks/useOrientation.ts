@@ -4,18 +4,31 @@ type Orientation = "portrait" | "landscape";
 
 interface OrientationInfo {
   orientation: Orientation;
-  isTV: boolean;
+  isDesktopOrTV: boolean;
 }
 
-function detectTV(): boolean {
+function isTouchOnlyDevice(): boolean {
+  return (
+    navigator.maxTouchPoints > 0 &&
+    !window.matchMedia("(pointer: fine)").matches
+  );
+}
+
+function detectDesktopOrTV(): boolean {
   const ua = navigator.userAgent.toLowerCase();
+
   const isTVUA =
     /smart-tv|smarttv|googletv|appletv|hbbtv|netcast|viera|nettv|philipstv|roku|tizen|webos/.test(
       ua,
     );
-  const isLargeSquareScreen =
-    window.screen.width >= 1080 && window.screen.height >= 1080;
-  return isTVUA || isLargeSquareScreen;
+
+  const isTabletUA = /ipad|android(?!.*mobile)|tablet|surface/.test(ua);
+
+  if (isTVUA) return true;
+  if (isTabletUA) return false;
+  if (isTouchOnlyDevice()) return false;
+
+  return window.innerWidth >= 1024;
 }
 
 function getOrientation(): Orientation {
@@ -25,12 +38,15 @@ function getOrientation(): Orientation {
 export function useOrientation(): OrientationInfo {
   const [info, setInfo] = useState<OrientationInfo>(() => ({
     orientation: getOrientation(),
-    isTV: detectTV(),
+    isDesktopOrTV: detectDesktopOrTV(),
   }));
 
   useEffect(() => {
     const handler = () =>
-      setInfo({ orientation: getOrientation(), isTV: detectTV() });
+      setInfo({
+        orientation: getOrientation(),
+        isDesktopOrTV: detectDesktopOrTV(),
+      });
     window.addEventListener("resize", handler);
     return () => window.removeEventListener("resize", handler);
   }, []);

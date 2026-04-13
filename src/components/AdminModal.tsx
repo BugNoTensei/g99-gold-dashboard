@@ -13,6 +13,7 @@ import {
   XIcon,
   WarningCircleIcon,
   WarningIcon,
+  ArrowsClockwiseIcon,
 } from "@phosphor-icons/react";
 
 interface Props {
@@ -30,6 +31,7 @@ interface Props {
   clearLocalPrice: () => void;
   isUsingLocal: boolean;
   userRole: "branch" | "admin" | null;
+  fetchPrice: () => Promise<void>;
 }
 
 export default function AdminModal({
@@ -44,6 +46,7 @@ export default function AdminModal({
   clearLocalPrice,
   isUsingLocal,
   userRole,
+  fetchPrice,
 }: Props) {
   const [formData, setFormData] = useState({
     barBuy: "",
@@ -155,6 +158,7 @@ export default function AdminModal({
                   </div>
                   <button
                     onClick={onClose}
+                    aria-label="ปิดหน้าต่าง"
                     className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-red-600 transition-colors"
                   >
                     <XIcon size={24} weight="bold" />
@@ -163,31 +167,57 @@ export default function AdminModal({
               </div>
 
               <div className="px-6 py-6 sm:p-6 space-y-6 bg-white">
-                <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 shadow-sm transition-all">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-gray-900">
-                      การซิงค์ข้อมูลอัตโนมัติ
-                    </span>
-                    <span className="text-xs text-gray-600">
-                      {isAutoFetch
-                        ? "กำลังอัปเดตจากสมาคมค้าทองคำ"
-                        : "ปิดการซิงค์ (กำหนดราคาเอง)"}
-                    </span>
-                  </div>
-                  <Switch
-                    checked={isAutoFetch}
-                    onChange={onToggleAutoFetch}
-                    className={`group relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 ${
-                      isAutoFetch ? "bg-red-600" : "bg-gray-300"
-                    }`}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        isAutoFetch ? "translate-x-5" : "translate-x-0"
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 shadow-sm transition-all">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-gray-900">
+                        การซิงค์ข้อมูลอัตโนมัติ
+                      </span>
+                      <span className="text-xs text-gray-600">
+                        {isAutoFetch
+                          ? "กำลังอัปเดตจากสมาคมค้าทองคำ"
+                          : "ปิดการซิงค์ (กำหนดราคาเอง)"}
+                      </span>
+                    </div>
+                    <Switch
+                      checked={isAutoFetch}
+                      onChange={onToggleAutoFetch}
+                      className={`group relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 ${
+                        isAutoFetch ? "bg-red-600" : "bg-gray-300"
                       }`}
-                    />
-                  </Switch>
+                    >
+                      <span className="sr-only">เปิด/ปิด ดึงราคาอัตโนมัติ</span>
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          isAutoFetch ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </Switch>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 shadow-sm">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-gray-900">
+                        ดึงข้อมูลล่าสุด
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await fetchPrice();
+                          onShowToast("ดึงราคาล่าสุดเรียบร้อย", "success");
+                        } catch (error) {
+                          onShowToast("ดึงราคาไม่สำเร็จ กรุณาลองใหม่", "error");
+                        }
+                      }}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
+                    >
+                      <ArrowsClockwiseIcon size={16} weight="bold" />
+                      <span>ซิงค์ทันที</span>
+                    </button>
+                  </div>
                 </div>
 
                 {isUsingLocal && (
@@ -266,13 +296,13 @@ export default function AdminModal({
                         }
                         className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${
                           isAutoFetch && userRole !== "admin"
-                            ? "bg-gray-100 text-gray-600 cursor-not-allowed"
+                            ? "bg-gray-100 text-gray-700 cursor-not-allowed"
                             : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"
                         }`}
                         placeholder="0"
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                        <span className="text-sm font-medium text-gray-600">
+                        <span className="text-sm font-medium text-gray-700">
                           บาท
                         </span>
                       </div>
@@ -293,13 +323,13 @@ export default function AdminModal({
                         }
                         className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${
                           isAutoFetch && userRole !== "admin"
-                            ? "bg-gray-100 text-gray-600 cursor-not-allowed"
+                            ? "bg-gray-100 text-gray-700 cursor-not-allowed"
                             : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"
                         }`}
                         placeholder="0"
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                        <span className="text-sm font-medium text-gray-600">
+                        <span className="text-sm font-medium text-gray-700">
                           บาท
                         </span>
                       </div>
@@ -320,13 +350,13 @@ export default function AdminModal({
                         }
                         className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${
                           isAutoFetch && userRole !== "admin"
-                            ? "bg-gray-100 text-gray-600 cursor-not-allowed"
+                            ? "bg-gray-100 text-gray-700 cursor-not-allowed"
                             : "bg-gray-50 text-gray-950 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-red-600"
                         }`}
                         placeholder="ระบบจะคำนวณอัตโนมัติหากเว้นว่าง"
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                        <span className="text-sm font-medium text-gray-600">
+                        <span className="text-sm font-medium text-gray-700">
                           บาท
                         </span>
                       </div>
@@ -343,7 +373,7 @@ export default function AdminModal({
                         </p>
                       </div>
                     ) : (
-                      <p className="mt-2 text-xs text-gray-600">
+                      <p className="mt-2 text-xs text-gray-700">
                         หากเว้นว่าง ระบบ API จะคำนวณราคาให้โดยอัตโนมัติ
                       </p>
                     )}
@@ -371,7 +401,7 @@ export default function AdminModal({
                       >
                         บังคับซิงค์ข้อมูลไปยังทุกสาขา (Force Global Sync)
                       </label>
-                      <p className="text-gray-600">
+                      <p className="text-gray-700">
                         ข้อมูลนี้จะถูกบังคับใช้แทนที่ข้อมูลที่สาขาตั้งไว้ทั้งหมดในระบบทันที
                       </p>
                     </div>

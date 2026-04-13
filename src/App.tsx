@@ -29,7 +29,7 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playCountRef = useRef<number>(1);
 
-  const { orientation, isTV } = useOrientation();
+  const { orientation, isDesktopOrTV } = useOrientation();
   const isPortrait = orientation === "portrait";
 
   useEffect(() => {
@@ -147,17 +147,17 @@ export default function App() {
         </div>
       )}
 
-      {isPortrait && !isTV && (
+      {!isDesktopOrTV && (
         <div className="fixed inset-0 z-99999 bg-black text-white flex flex-col items-center justify-center p-8 text-center overscroll-none">
           <div className="flex items-center justify-center gap-4 mb-6 text-gold-light">
             <DeviceMobileIcon size={64} className="animate-pulse" />
             <ArrowsClockwiseIcon size={48} />
           </div>
           <h2 className="text-3xl font-bold text-gold-light mb-4">
-            โปรดหมุนหน้าจอเป็นแนวนอน
+            ไม่รองรับอุปกรณ์นี้
           </h2>
           <p className="text-lg text-gray-300">
-            ระบบถูกออกแบบมาเพื่อแสดงผลแนวนอนเท่านั้น
+            ระบบรองรับเฉพาะคอมพิวเตอร์และโทรทัศน์เท่านั้น
           </p>
         </div>
       )}
@@ -176,7 +176,7 @@ export default function App() {
         </div>
       )}
 
-      {isPortrait && isTV ? (
+      {isPortrait && isDesktopOrTV ? (
         <PortraitTVLayout
           prices={prices}
           displayTime={displayTime}
@@ -260,6 +260,7 @@ export default function App() {
         clearLocalPrice={clearLocalPrice}
         isUsingLocal={isUsingLocal}
         userRole={userRole}
+        fetchPrice={fetchPrice}
       />
 
       <div
