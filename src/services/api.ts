@@ -10,6 +10,7 @@ export interface GoldPrices {
   ornaReturn: number;
   priceAt?: string;
   update_time?: string;
+  p_source: "G99_Dashboard";
 }
 
 export const getGoldPrices = async (): Promise<GoldPrices> => {
