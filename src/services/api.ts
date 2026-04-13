@@ -21,7 +21,6 @@ export const updateGoldPrices = async (payload: GoldPrices) => {
   await axios.post(API_URL, payload);
 
   if (supabase) {
-    console.log("Sending payload to Supabase:", payload);
     const { error } = await supabase.rpc("insert_gold_prices_secure", {
       p_bar_buy: payload.barBuy,
       p_bar_sell: payload.barSale,
