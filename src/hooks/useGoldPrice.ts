@@ -18,7 +18,6 @@ export function useGoldPrice(
     barBuy: 0,
     barSale: 0,
     ornaReturn: 0,
-    p_source: "G99_Dashboard",
   });
 
   const [localPrices, setLocalPrices] = useState<GoldPrices | null>(() => {

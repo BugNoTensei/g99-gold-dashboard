@@ -10,7 +10,6 @@ export interface GoldPrices {
   ornaReturn: number;
   priceAt?: string;
   update_time?: string;
-  p_source: "G99_Dashboard";
 }
 
 export const getGoldPrices = async (): Promise<GoldPrices> => {
@@ -22,11 +21,13 @@ export const updateGoldPrices = async (payload: GoldPrices) => {
   await axios.post(API_URL, payload);
 
   if (supabase) {
+    console.log("Sending payload to Supabase:", payload);
     const { error } = await supabase.rpc("insert_gold_prices_secure", {
       p_bar_buy: payload.barBuy,
       p_bar_sell: payload.barSale,
       p_ornament_buy: payload.ornaReturn,
       p_pin: PIN,
+      p_source: "G99_Dashboard",
     });
 
     if (error) throw error;
