@@ -202,21 +202,47 @@ export default function AdminModal({
                         ดึงข้อมูลล่าสุด
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          await fetchPrice();
-                          onShowToast("ดึงราคาล่าสุดเรียบร้อย", "success");
-                        } catch (error) {
-                          onShowToast("ดึงราคาไม่สำเร็จ กรุณาลองใหม่", "error");
-                        }
-                      }}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
-                    >
-                      <ArrowsClockwiseIcon size={16} weight="bold" />
-                      <span>ซิงค์ทันที</span>
-                    </button>
+                    <div className="relative group">
+                      <button
+                        type="button"
+                        disabled={!isAutoFetch || isUsingLocal || isSaving}
+                        onClick={async () => {
+                          try {
+                            await fetchPrice();
+                            onShowToast("ดึงราคาล่าสุดเรียบร้อย", "success");
+                          } catch {
+                            onShowToast(
+                              "ดึงราคาไม่สำเร็จ กรุณาลองใหม่",
+                              "error",
+                            );
+                          }
+                        }}
+                        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                          !isAutoFetch || isUsingLocal || isSaving
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none"
+                            : "bg-gray-900 hover:bg-gray-800 text-white focus:ring-gray-900"
+                        }`}
+                      >
+                        <ArrowsClockwiseIcon
+                          size={16}
+                          weight="bold"
+                          className={isSaving ? "animate-spin" : ""}
+                        />
+                        <span>
+                          {!isAutoFetch || isUsingLocal
+                            ? "ปิดการซิงค์"
+                            : "ซิงค์ทันที"}
+                        </span>
+                      </button>
+                      {(!isAutoFetch || isUsingLocal) && (
+                        <div className="absolute right-0 top-full mt-2 w-48 p-2 bg-gray-900 text-white text-xs text-center rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                          {isUsingLocal
+                            ? 'ต้องล้างค่า "ราคากำหนดเอง" ก่อน จึงจะสามารถซิงค์ราคากลางได้'
+                            : "ต้องเปิดการซิงค์ข้อมูลอัตโนมัติก่อน จึงจะสามารถดึงราคาล่าสุดได้"}
+                          <div className="absolute -top-1 right-8 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
