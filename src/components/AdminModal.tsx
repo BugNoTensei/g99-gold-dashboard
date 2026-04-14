@@ -6,14 +6,18 @@ import {
   DialogBackdrop,
   Switch,
 } from "@headlessui/react";
+import { uploadPromotionBanner, deletePromotionBanner } from "../services/api";
 import type { GoldPrices } from "../services/api";
+import { supabase } from "../config/supabase";
 import ConfirmModal from "./ConfirmModal";
+import { BannerManagerModal, type Banner } from "./BannerManagerModal";
 import {
   FadersIcon,
   XIcon,
   WarningCircleIcon,
   WarningIcon,
   ArrowsClockwiseIcon,
+  ImagesIcon,
 } from "@phosphor-icons/react";
 
 interface Props {
@@ -58,6 +62,46 @@ export default function AdminModal({
   const [saveMode, setSaveMode] = useState<"branch" | "admin">("branch");
   const [forceUpdate, setForceUpdate] = useState(false);
 
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
+  const [banners, setBanners] = useState<Banner[]>([]);
+
+  const fetchBanners = async () => {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("branch_promotions")
+        .select("id, image_url")
+        .eq("branch_id", "main")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setBanners(data.map((b) => ({ id: b.id, url: b.image_url })));
+      }
+    }
+  };
+
+  const handleUploadBanner = async (file: File) => {
+    try {
+      await uploadPromotionBanner(file, "main");
+      await fetchBanners();
+      onShowToast("เพิ่มรูปโฆษณาสำเร็จ", "success");
+    } catch {
+      onShowToast("อัปโหลดไม่สำเร็จ", "error");
+    }
+  };
+
+  const handleDeleteBanner = async (id: string) => {
+    try {
+      const bannerToDelete = banners.find((b) => b.id === id);
+      if (bannerToDelete) {
+        await deletePromotionBanner(id, bannerToDelete.url);
+        setBanners(banners.filter((b) => b.id !== id));
+        onShowToast("ลบรูปโฆษณาสำเร็จ", "success");
+      }
+    } catch {
+      onShowToast("ลบข้อมูลไม่สำเร็จ", "error");
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -70,6 +114,7 @@ export default function AdminModal({
         setSaveMode("branch");
       }
       setShowConfirm(false);
+      fetchBanners();
     }
   }, [isOpen, currentPrices, userRole]);
 
@@ -159,7 +204,7 @@ export default function AdminModal({
                   <button
                     onClick={onClose}
                     aria-label="ปิดหน้าต่าง"
-                    className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-red-600 transition-colors"
+                    className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-red-600 transition-colors cursor-pointer"
                   >
                     <XIcon size={24} weight="bold" />
                   </button>
@@ -167,6 +212,33 @@ export default function AdminModal({
               </div>
 
               <div className="px-6 py-6 sm:p-6 space-y-6 bg-white">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100">
+                      <ImagesIcon
+                        size={20}
+                        className="text-gray-700"
+                        weight="fill"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-gray-900">
+                        จัดการป้ายโฆษณา (Carousel)
+                      </span>
+                      <span className="text-xs text-gray-600 mt-0.5">
+                        เพิ่ม/ลบ รูปภาพโฆษณาที่แสดงผลบนหน้าจอ
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsBannerModalOpen(true)}
+                    className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-100 transition-colors focus:outline-none cursor-pointer"
+                  >
+                    ตั้งค่ารูปภาพ
+                  </button>
+                </div>
+
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 shadow-sm transition-all">
                     <div className="flex flex-col">
@@ -217,7 +289,7 @@ export default function AdminModal({
                             );
                           }
                         }}
-                        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer ${
                           !isAutoFetch || isUsingLocal || isSaving
                             ? "bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none"
                             : "bg-gray-900 hover:bg-gray-800 text-white focus:ring-gray-900"
@@ -268,7 +340,7 @@ export default function AdminModal({
                             "success",
                           );
                         }}
-                        className="text-xs font-bold text-red-700 hover:text-red-900 hover:underline transition-colors focus:outline-none"
+                        className="text-xs font-bold text-red-700 hover:text-red-900 hover:underline transition-colors focus:outline-none cursor-pointer"
                       >
                         ล้างค่าและใช้ราคากลาง
                       </button>
@@ -280,7 +352,7 @@ export default function AdminModal({
                   <div className="flex space-x-1.5 rounded-lg bg-gray-100 p-1 ring-1 ring-gray-200">
                     <button
                       onClick={() => setSaveMode("branch")}
-                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 focus:outline-none ${
+                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 focus:outline-none cursor-pointer ${
                         saveMode === "branch"
                           ? "bg-white text-gray-950 shadow ring-1 ring-gray-900/5"
                           : "text-gray-600 hover:text-gray-800"
@@ -290,7 +362,7 @@ export default function AdminModal({
                     </button>
                     <button
                       onClick={() => setSaveMode("admin")}
-                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 focus:outline-none ${
+                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 focus:outline-none cursor-pointer ${
                         saveMode === "admin"
                           ? "bg-white text-red-600 shadow ring-1 ring-red-900/5"
                           : "text-gray-600 hover:text-red-700 hover:bg-white/50"
@@ -440,7 +512,7 @@ export default function AdminModal({
                   type="button"
                   onClick={handlePreSubmit}
                   disabled={isSubmitDisabled}
-                  className={`inline-flex w-full justify-center rounded-lg px-6 py-2.5 text-sm font-semibold text-white shadow-sm sm:w-auto transition-all ${
+                  className={`inline-flex w-full justify-center rounded-lg px-6 py-2.5 text-sm font-semibold text-white shadow-sm sm:w-auto transition-all cursor-pointer ${
                     saveMode === "branch"
                       ? "bg-gray-950 hover:bg-gray-800"
                       : "bg-red-600 hover:bg-red-700"
@@ -451,7 +523,7 @@ export default function AdminModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-gray-950 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-100 sm:mt-0 sm:w-auto transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  className="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-gray-950 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-100 sm:mt-0 sm:w-auto transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer"
                 >
                   ยกเลิก
                 </button>
@@ -469,6 +541,15 @@ export default function AdminModal({
         saveMode={saveMode}
         formData={formData}
         forceUpdate={forceUpdate}
+      />
+
+      <BannerManagerModal
+        isOpen={isBannerModalOpen}
+        onClose={() => setIsBannerModalOpen(false)}
+        branchName={userRole === "admin" ? "ส่วนกลาง (Admin)" : "สาขาหน้าร้าน"}
+        banners={banners}
+        onUploadBanner={handleUploadBanner}
+        onDeleteBanner={handleDeleteBanner}
       />
     </>
   );

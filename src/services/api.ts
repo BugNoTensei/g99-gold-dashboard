@@ -32,3 +32,49 @@ export const updateGoldPrices = async (payload: GoldPrices) => {
     if (error) throw error;
   }
 };
+
+export const uploadPromotionBanner = async (
+  file: File,
+  branchId: string = "main",
+) => {
+  if (!supabase) throw new Error("Supabase is not initialized");
+
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${branchId}-${Date.now()}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("promotions")
+    .upload(filePath, file, {
+      upsert: true,
+    });
+
+  if (uploadError) throw uploadError;
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("promotions").getPublicUrl(filePath);
+
+  const { error: dbError } = await supabase
+    .from("branch_promotions")
+    .insert([{ branch_id: branchId, image_url: publicUrl }]);
+
+  if (dbError) throw dbError;
+  return publicUrl;
+};
+
+export const deletePromotionBanner = async (id: string, imageUrl: string) => {
+  if (!supabase) throw new Error("Supabase is not initialized");
+
+  const { error: dbError } = await supabase
+    .from("branch_promotions")
+    .delete()
+    .eq("id", id);
+
+  if (dbError) throw dbError;
+
+  const fileName = imageUrl.split("/").pop();
+  if (fileName) {
+    await supabase.storage.from("promotions").remove([fileName]);
+  }
+};

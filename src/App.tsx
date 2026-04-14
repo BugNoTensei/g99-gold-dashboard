@@ -8,6 +8,7 @@ import PortraitTVLayout from "./components/PortraitTVLayout";
 import { APP_CONFIG } from "./config";
 import { useGoldPrice } from "./hooks/useGoldPrice";
 import { useOrientation } from "./hooks/useOrientation";
+import { supabase } from "./config/supabase";
 import {
   CheckCircleIcon,
   WarningCircleIcon,
@@ -25,12 +26,34 @@ export default function App() {
     type: "success" | "error";
   } | null>(null);
   const [userRole, setUserRole] = useState<"branch" | "admin" | null>(null);
+  const [displayAds, setDisplayAds] = useState<string[]>(APP_CONFIG.ADS_IMAGES);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playCountRef = useRef<number>(1);
 
   const { orientation, isDesktopOrTV } = useOrientation();
   const isPortrait = orientation === "portrait";
+
+  useEffect(() => {
+    const fetchAds = async () => {
+      if (!isSystemReady || !supabase) return;
+
+      const { data } = await supabase
+        .from("branch_promotions")
+        .select("image_url")
+        .eq("branch_id", "main")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (data && data.length > 0) {
+        setDisplayAds(data.map((item) => item.image_url));
+      } else {
+        setDisplayAds(APP_CONFIG.ADS_IMAGES);
+      }
+    };
+
+    fetchAds();
+  }, [isSystemReady, isModalOpen]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && APP_CONFIG.NOTIFICATION_SOUND_URL) {
@@ -181,6 +204,7 @@ export default function App() {
           prices={prices}
           displayTime={displayTime}
           panelOpacity={panelOpacity}
+          displayAds={displayAds}
           onOpenSettings={handleOpenSettings}
           onToggleFullscreen={handleToggleFullscreen}
         />
@@ -229,7 +253,7 @@ export default function App() {
 
           <div className="w-1/2 h-full relative bg-black">
             <AdsSlider
-              images={APP_CONFIG.ADS_IMAGES}
+              images={displayAds}
               interval={APP_CONFIG.SLIDER_INTERVAL_MS}
               onOpenSettings={handleOpenSettings}
               onToggleFullscreen={handleToggleFullscreen}
