@@ -5,10 +5,12 @@ import AdsSlider from "./components/AdsSlider";
 import AdminModal from "./components/AdminModal";
 import PinModal from "./components/PinModal";
 import PortraitTVLayout from "./components/PortraitTVLayout";
+import SetupScreen from "./components/SetupScreen";
 import { APP_CONFIG } from "./config";
 import { useGoldPrice } from "./hooks/useGoldPrice";
 import { useOrientation } from "./hooks/useOrientation";
 import { supabase } from "./config/supabase";
+import { checkBranchExists } from "./services/api";
 import {
   CheckCircleIcon,
   WarningCircleIcon,
@@ -17,6 +19,14 @@ import {
 } from "@phosphor-icons/react";
 
 export default function App() {
+  const [branchConfig, setBranchConfig] = useState<{
+    id: string;
+    name: string;
+  } | null>(() => {
+    const saved = localStorage.getItem("g99_branch_config");
+    return saved ? JSON.parse(saved) : null;
+  });
+
   const [isSystemReady, setIsSystemReady] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
@@ -34,14 +44,38 @@ export default function App() {
   const { orientation, isDesktopOrTV } = useOrientation();
   const isPortrait = orientation === "portrait";
 
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success",
+  ) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  useEffect(() => {
+    const validateSession = async () => {
+      if (branchConfig?.id) {
+        const exists = await checkBranchExists(branchConfig.id);
+        if (!exists) {
+          localStorage.removeItem("g99_branch_config");
+          showToast("สาขานี้ถูกลบออกจากระบบแล้ว", "error");
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        }
+      }
+    };
+    validateSession();
+  }, [branchConfig?.id]);
+
   useEffect(() => {
     const fetchAds = async () => {
-      if (!isSystemReady || !supabase) return;
+      if (!isSystemReady || !supabase || !branchConfig) return;
 
       const { data } = await supabase
         .from("branch_promotions")
         .select("image_url")
-        .eq("branch_id", "main")
+        .eq("branch_id", branchConfig.id)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
@@ -53,7 +87,7 @@ export default function App() {
     };
 
     fetchAds();
-  }, [isSystemReady, isModalOpen]);
+  }, [isSystemReady, isModalOpen, branchConfig]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && APP_CONFIG.NOTIFICATION_SOUND_URL) {
@@ -76,14 +110,6 @@ export default function App() {
       };
     }
   }, []);
-
-  const showToast = (
-    message: string,
-    type: "success" | "error" = "success",
-  ) => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   const handlePriceChange = () => {
     if (audioRef.current) {
@@ -148,6 +174,10 @@ export default function App() {
     ? `ข้อมูลล่าสุด ณ วันที่ ${dateObj.toLocaleDateString("th-TH", { year: "numeric", month: "2-digit", day: "2-digit" })} เวลา ${dateObj.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} น.`
     : "กำลังอัปเดตข้อมูล...";
 
+  if (!branchConfig) {
+    return <SetupScreen onSetupComplete={setBranchConfig} />;
+  }
+
   return (
     <main className="flex flex-row w-full h-dvh relative font-prompt overflow-hidden bg-black overscroll-none pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
       {userRole && (
@@ -157,13 +187,15 @@ export default function App() {
               className={`w-2.5 h-2.5 rounded-full animate-pulse ${userRole === "admin" ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" : "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)]"}`}
             />
             <span className="text-white text-xs md:text-sm font-medium tracking-wide">
-              {userRole === "admin" ? "Admin Mode" : "Branch Mode"}
+              {userRole === "admin"
+                ? "Admin Mode"
+                : `${branchConfig.name} Mode`}
             </span>
           </div>
           <div className="w-px h-4 bg-white/30" />
           <button
             onClick={() => setUserRole(null)}
-            className="text-white/80 hover:text-white text-xs md:text-sm font-bold transition-colors"
+            className="text-white/80 hover:text-white text-xs md:text-sm font-bold transition-colors cursor-pointer"
           >
             ล็อกเอาท์
           </button>
@@ -265,13 +297,13 @@ export default function App() {
       <PinModal
         isOpen={isPinModalOpen}
         onClose={() => setIsPinModalOpen(false)}
+        branchId={branchConfig?.id || ""}
         onSuccess={(role) => {
           setUserRole(role);
           setIsPinModalOpen(false);
           setIsModalOpen(true);
         }}
       />
-
       <AdminModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

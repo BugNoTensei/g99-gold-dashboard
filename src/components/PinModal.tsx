@@ -6,18 +6,21 @@ import {
   DialogTitle,
   DialogBackdrop,
 } from "@headlessui/react";
-import { LockKeyIcon } from "@phosphor-icons/react";
+import { LockKey, CircleNotch } from "@phosphor-icons/react";
 import { supabase } from "../config/supabase";
+import { verifyBranchPin } from "../services/api";
 
 interface PinModalProps {
   isOpen: boolean;
   onClose: () => void;
+  branchId: string;
   onSuccess: (role: "branch" | "admin") => void;
 }
 
 export default function PinModal({
   isOpen,
   onClose,
+  branchId,
   onSuccess,
 }: PinModalProps) {
   const [pin, setPin] = useState("");
@@ -44,20 +47,32 @@ export default function PinModal({
     setError("");
 
     try {
-      const { data, error: rpcError } = await supabase.rpc("verify_login_pin", {
-        p_pin: pin,
-      });
+      const { data: roleData, error: rpcError } = await supabase.rpc(
+        "verify_login_pin",
+        {
+          p_pin: pin,
+        },
+      );
 
-      if (rpcError) throw rpcError;
+      if (!rpcError && roleData === "admin") {
+        onSuccess("admin");
+        return;
+      }
 
-      if (data === "branch" || data === "admin") {
-        onSuccess(data);
+      if (!branchId) {
+        setError("ไม่พบข้อมูลสาขา กรุณาตั้งค่าหน้าจอใหม่");
+        return;
+      }
+
+      const isValidBranch = await verifyBranchPin(branchId, pin);
+
+      if (isValidBranch) {
+        onSuccess("branch");
       } else {
         setError("รหัสผ่านไม่ถูกต้อง กรุณาลองอีกครั้ง");
         setPin("");
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
     } finally {
       setIsLoading(false);
@@ -82,8 +97,8 @@ export default function PinModal({
             className="relative w-full max-w-sm transform overflow-hidden rounded-2xl bg-white p-6 pt-8 text-left shadow-2xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-leave:duration-200 data-enter:ease-out data-leave:ease-in data-closed:sm:translate-y-0 data-closed:sm:scale-95"
           >
             <div className="text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
-                <LockKeyIcon size={24} weight="bold" className="text-red-600" />
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 border border-red-100 mb-4">
+                <LockKey size={28} weight="fill" className="text-red-600" />
               </div>
               <DialogTitle
                 as="h3"
@@ -92,9 +107,10 @@ export default function PinModal({
                 กรุณายืนยันตัวตน
               </DialogTitle>
               <p className="mt-2 text-sm text-gray-500">
-                ระบุรหัสผ่านเพื่อเข้าสู่หน้าตั้งค่าราคา
+                ระบุรหัสผ่านเพื่อเข้าสู่หน้าตั้งค่าราคาและโฆษณา
               </p>
             </div>
+
             <form className="mt-6 space-y-4" onSubmit={handleLogin}>
               <input
                 type="text"
@@ -108,37 +124,39 @@ export default function PinModal({
                 type="password"
                 required
                 value={pin}
-                onChange={(e) => setPin(e.target.value)}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
                 disabled={isLoading}
                 autoComplete="new-password"
-                className="block w-full rounded-xl border-0 py-4 text-center text-3xl tracking-[0.5em] text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-red-600 font-bold focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="block w-full rounded-xl border-0 py-4 text-center text-3xl tracking-[0.5em] text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-red-600 font-bold focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-gray-50 focus:bg-white transition-colors"
                 placeholder="••••••"
                 autoFocus
               />
+
               {error && (
-                <p className="text-center text-sm font-medium text-red-600">
+                <p className="text-center text-sm font-semibold text-red-600">
                   {error}
                 </p>
               )}
+
               <div className="mt-6 flex gap-3">
                 <button
                   type="button"
                   onClick={onClose}
                   disabled={isLoading}
-                  className="flex-1 rounded-xl bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-200 transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 rounded-xl bg-gray-100 px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-200 transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
-                  disabled={isLoading || !pin}
-                  className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold text-white transition-colors focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 ${
-                    isLoading || !pin
-                      ? "bg-red-400 cursor-not-allowed opacity-70"
-                      : "bg-red-600 hover:bg-red-700"
-                  }`}
+                  disabled={isLoading || pin.length < 4}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 bg-gray-950 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  {isLoading ? "ตรวจสอบ..." : "ยืนยัน"}
+                  {isLoading ? (
+                    <CircleNotch size={18} className="animate-spin" />
+                  ) : (
+                    "ยืนยัน"
+                  )}
                 </button>
               </div>
             </form>

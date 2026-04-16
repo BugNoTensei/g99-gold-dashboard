@@ -11,13 +11,14 @@ import type { GoldPrices } from "../services/api";
 import { supabase } from "../config/supabase";
 import ConfirmModal from "./ConfirmModal";
 import { BannerManagerModal, type Banner } from "./BannerManagerModal";
+import { BranchManagerModal } from "./BranchManagerModal";
 import {
   FadersIcon,
   XIcon,
   WarningCircleIcon,
-  WarningIcon,
   ArrowsClockwiseIcon,
   ImagesIcon,
+  Storefront,
 } from "@phosphor-icons/react";
 
 interface Props {
@@ -63,14 +64,16 @@ export default function AdminModal({
   const [forceUpdate, setForceUpdate] = useState(false);
 
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
+  const [isBranchManagerOpen, setIsBranchManagerOpen] = useState(false);
   const [banners, setBanners] = useState<Banner[]>([]);
 
   const fetchBanners = async () => {
     if (supabase) {
+      const branchId = localStorage.getItem("g99_branch_id") || "main";
       const { data, error } = await supabase
         .from("branch_promotions")
         .select("id, image_url")
-        .eq("branch_id", "main")
+        .eq("branch_id", branchId)
         .order("created_at", { ascending: false });
 
       if (!error && data) {
@@ -81,7 +84,7 @@ export default function AdminModal({
 
   const handleUploadBanner = async (file: File) => {
     try {
-      await uploadPromotionBanner(file, "main");
+      await uploadPromotionBanner(file);
       await fetchBanners();
       onShowToast("เพิ่มรูปโฆษณาสำเร็จ", "success");
     } catch {
@@ -203,15 +206,14 @@ export default function AdminModal({
                   </div>
                   <button
                     onClick={onClose}
-                    aria-label="ปิดหน้าต่าง"
-                    className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-red-600 transition-colors cursor-pointer"
+                    className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
                   >
                     <XIcon size={24} weight="bold" />
                   </button>
                 </div>
               </div>
 
-              <div className="px-6 py-6 sm:p-6 space-y-6 bg-white">
+              <div className="px-6 py-6 sm:p-6 space-y-4 bg-white">
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100">
@@ -223,98 +225,104 @@ export default function AdminModal({
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold text-gray-900">
-                        จัดการป้ายโฆษณา (Carousel)
+                        จัดการป้ายโฆษณา
                       </span>
                       <span className="text-xs text-gray-600 mt-0.5">
-                        เพิ่ม/ลบ รูปภาพโฆษณาที่แสดงผลบนหน้าจอ
+                        เพิ่ม/ลบ รูปภาพโฆษณา
                       </span>
                     </div>
                   </div>
                   <button
-                    type="button"
                     onClick={() => setIsBannerModalOpen(true)}
-                    className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-100 transition-colors focus:outline-none cursor-pointer"
+                    className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-100 transition-colors cursor-pointer"
                   >
                     ตั้งค่ารูปภาพ
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 shadow-sm transition-all">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-gray-900">
-                        การซิงค์ข้อมูลอัตโนมัติ
-                      </span>
-                      <span className="text-xs text-gray-600">
-                        {isAutoFetch
-                          ? "กำลังอัปเดตจากสมาคมค้าทองคำ"
-                          : "ปิดการซิงค์ (กำหนดราคาเอง)"}
-                      </span>
-                    </div>
-                    <Switch
-                      checked={isAutoFetch}
-                      onChange={onToggleAutoFetch}
-                      className={`group relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 ${
-                        isAutoFetch ? "bg-red-600" : "bg-gray-300"
-                      }`}
-                    >
-                      <span className="sr-only">เปิด/ปิด ดึงราคาอัตโนมัติ</span>
-                      <span
-                        aria-hidden="true"
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          isAutoFetch ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </Switch>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 shadow-sm">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-gray-900">
-                        ดึงข้อมูลล่าสุด
-                      </span>
-                    </div>
-                    <div className="relative group">
-                      <button
-                        type="button"
-                        disabled={!isAutoFetch || isUsingLocal || isSaving}
-                        onClick={async () => {
-                          try {
-                            await fetchPrice();
-                            onShowToast("ดึงราคาล่าสุดเรียบร้อย", "success");
-                          } catch {
-                            onShowToast(
-                              "ดึงราคาไม่สำเร็จ กรุณาลองใหม่",
-                              "error",
-                            );
-                          }
-                        }}
-                        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer ${
-                          !isAutoFetch || isUsingLocal || isSaving
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none"
-                            : "bg-gray-900 hover:bg-gray-800 text-white focus:ring-gray-900"
-                        }`}
-                      >
-                        <ArrowsClockwiseIcon
-                          size={16}
-                          weight="bold"
-                          className={isSaving ? "animate-spin" : ""}
+                {userRole === "admin" && (
+                  <div className="flex items-center justify-between p-4 bg-amber-50 rounded-xl border border-amber-200 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-white rounded-lg shadow-sm border border-amber-100">
+                        <Storefront
+                          size={20}
+                          className="text-amber-700"
+                          weight="fill"
                         />
-                        <span>
-                          {!isAutoFetch || isUsingLocal
-                            ? "ปิดการซิงค์"
-                            : "ซิงค์ทันที"}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-amber-900">
+                          จัดการสาขา (Branches)
                         </span>
-                      </button>
-                      {(!isAutoFetch || isUsingLocal) && (
-                        <div className="absolute right-0 top-full mt-2 w-48 p-2 bg-gray-900 text-white text-xs text-center rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                          {isUsingLocal
-                            ? 'ต้องล้างค่า "ราคากำหนดเอง" ก่อน จึงจะสามารถซิงค์ราคากลางได้'
-                            : "ต้องเปิดการซิงค์ข้อมูลอัตโนมัติก่อน จึงจะสามารถดึงราคาล่าสุดได้"}
-                          <div className="absolute -top-1 right-8 w-2 h-2 bg-gray-900 transform rotate-45"></div>
-                        </div>
-                      )}
+                        <span className="text-xs text-amber-700 mt-0.5">
+                          เพิ่มสาขาใหม่ในระบบ
+                        </span>
+                      </div>
                     </div>
+                    <button
+                      onClick={() => setIsBranchManagerOpen(true)}
+                      className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-amber-900 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-100 transition-colors cursor-pointer"
+                    >
+                      จัดการสาขา
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 shadow-sm transition-all mt-2">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-gray-900">
+                      การซิงค์ข้อมูลอัตโนมัติ
+                    </span>
+                    <span className="text-xs text-gray-600">
+                      {isAutoFetch
+                        ? "กำลังอัปเดตจากสมาคมค้าทองคำ"
+                        : "ปิดการซิงค์ (กำหนดราคาเอง)"}
+                    </span>
+                  </div>
+                  <Switch
+                    checked={isAutoFetch}
+                    onChange={onToggleAutoFetch}
+                    className={`group relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 ${isAutoFetch ? "bg-red-600" : "bg-gray-300"}`}
+                  >
+                    <span className="sr-only">เปิด/ปิด ดึงราคาอัตโนมัติ</span>
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isAutoFetch ? "translate-x-5" : "translate-x-0"}`}
+                    />
+                  </Switch>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 shadow-sm">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-gray-900">
+                      ดึงข้อมูลล่าสุด
+                    </span>
+                  </div>
+                  <div className="relative group">
+                    <button
+                      type="button"
+                      disabled={!isAutoFetch || isUsingLocal || isSaving}
+                      onClick={async () => {
+                        try {
+                          await fetchPrice();
+                          onShowToast("ดึงราคาล่าสุดเรียบร้อย", "success");
+                        } catch {
+                          onShowToast("ดึงราคาไม่สำเร็จ กรุณาลองใหม่", "error");
+                        }
+                      }}
+                      className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer ${!isAutoFetch || isUsingLocal || isSaving ? "bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none" : "bg-gray-900 hover:bg-gray-800 text-white focus:ring-gray-900"}`}
+                    >
+                      <ArrowsClockwiseIcon
+                        size={16}
+                        weight="bold"
+                        className={isSaving ? "animate-spin" : ""}
+                      />
+                      <span>
+                        {!isAutoFetch || isUsingLocal
+                          ? "ปิดการซิงค์"
+                          : "ซิงค์ทันที"}
+                      </span>
+                    </button>
                   </div>
                 </div>
 
@@ -340,7 +348,7 @@ export default function AdminModal({
                             "success",
                           );
                         }}
-                        className="text-xs font-bold text-red-700 hover:text-red-900 hover:underline transition-colors focus:outline-none cursor-pointer"
+                        className="text-xs font-bold text-red-700 hover:text-red-900 hover:underline transition-colors cursor-pointer"
                       >
                         ล้างค่าและใช้ราคากลาง
                       </button>
@@ -349,30 +357,22 @@ export default function AdminModal({
                 )}
 
                 {userRole === "admin" ? (
-                  <div className="flex space-x-1.5 rounded-lg bg-gray-100 p-1 ring-1 ring-gray-200">
+                  <div className="flex space-x-1.5 rounded-lg bg-gray-100 p-1 ring-1 ring-gray-200 mt-2">
                     <button
                       onClick={() => setSaveMode("branch")}
-                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 focus:outline-none cursor-pointer ${
-                        saveMode === "branch"
-                          ? "bg-white text-gray-950 shadow ring-1 ring-gray-900/5"
-                          : "text-gray-600 hover:text-gray-800"
-                      }`}
+                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 cursor-pointer ${saveMode === "branch" ? "bg-white text-gray-950 shadow ring-1 ring-gray-900/5" : "text-gray-600 hover:text-gray-800"}`}
                     >
                       ปรับราคาสาขา
                     </button>
                     <button
                       onClick={() => setSaveMode("admin")}
-                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 focus:outline-none cursor-pointer ${
-                        saveMode === "admin"
-                          ? "bg-white text-red-600 shadow ring-1 ring-red-900/5"
-                          : "text-gray-600 hover:text-red-700 hover:bg-white/50"
-                      }`}
+                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 cursor-pointer ${saveMode === "admin" ? "bg-white text-red-600 shadow ring-1 ring-red-900/5" : "text-gray-600 hover:text-red-700 hover:bg-white/50"}`}
                     >
                       ประกาศราคากลาง (Admin)
                     </button>
                   </div>
                 ) : (
-                  <div className="rounded-lg bg-gray-50 p-3 ring-1 ring-gray-200 text-center border-l-4 border-gray-900">
+                  <div className="rounded-lg bg-gray-50 p-3 ring-1 ring-gray-200 text-center border-l-4 border-gray-900 mt-2">
                     <span className="text-sm font-bold text-gray-800">
                       โหมดตั้งค่า: ปรับราคาสาขาหน้าร้าน
                     </span>
@@ -392,11 +392,7 @@ export default function AdminModal({
                         onChange={(e) =>
                           handleInputChange("barBuy", e.target.value)
                         }
-                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${
-                          isAutoFetch && userRole !== "admin"
-                            ? "bg-gray-100 text-gray-700 cursor-not-allowed"
-                            : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"
-                        }`}
+                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isAutoFetch && userRole !== "admin" ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
                         placeholder="0"
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
@@ -419,11 +415,7 @@ export default function AdminModal({
                         onChange={(e) =>
                           handleInputChange("barSale", e.target.value)
                         }
-                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${
-                          isAutoFetch && userRole !== "admin"
-                            ? "bg-gray-100 text-gray-700 cursor-not-allowed"
-                            : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"
-                        }`}
+                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isAutoFetch && userRole !== "admin" ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
                         placeholder="0"
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
@@ -446,11 +438,7 @@ export default function AdminModal({
                         onChange={(e) =>
                           handleInputChange("ornaReturn", e.target.value)
                         }
-                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${
-                          isAutoFetch && userRole !== "admin"
-                            ? "bg-gray-100 text-gray-700 cursor-not-allowed"
-                            : "bg-gray-50 text-gray-950 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-red-600"
-                        }`}
+                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isAutoFetch && userRole !== "admin" ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-gray-50 text-gray-950 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
                         placeholder="ระบบจะคำนวณอัตโนมัติหากเว้นว่าง"
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
@@ -459,22 +447,6 @@ export default function AdminModal({
                         </span>
                       </div>
                     </div>
-                    {isAutoFetch && userRole !== "admin" ? (
-                      <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 ring-1 ring-inset ring-amber-500/20">
-                        <WarningIcon
-                          size={16}
-                          weight="fill"
-                          className="mt-0.5 shrink-0 text-amber-500"
-                        />
-                        <p className="text-xs font-medium text-amber-800 leading-relaxed">
-                          กรุณาปิดการซิงค์ข้อมูลอัตโนมัติก่อน เพื่อแก้ไขราคา
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="mt-2 text-xs text-gray-700">
-                        หากเว้นว่าง ระบบ API จะคำนวณราคาให้โดยอัตโนมัติ
-                      </p>
-                    )}
                   </div>
                 </div>
 
@@ -512,18 +484,14 @@ export default function AdminModal({
                   type="button"
                   onClick={handlePreSubmit}
                   disabled={isSubmitDisabled}
-                  className={`inline-flex w-full justify-center rounded-lg px-6 py-2.5 text-sm font-semibold text-white shadow-sm sm:w-auto transition-all cursor-pointer ${
-                    saveMode === "branch"
-                      ? "bg-gray-950 hover:bg-gray-800"
-                      : "bg-red-600 hover:bg-red-700"
-                  } focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 focus:ring-offset-gray-50 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`inline-flex w-full justify-center rounded-lg px-6 py-2.5 text-sm font-semibold text-white shadow-sm sm:w-auto transition-all cursor-pointer ${saveMode === "branch" ? "bg-gray-950 hover:bg-gray-800" : "bg-red-600 hover:bg-red-700"} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {saveMode === "branch" ? "บันทึกราคาสาขา" : "ประกาศราคากลาง"}
                 </button>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-gray-950 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-100 sm:mt-0 sm:w-auto transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer"
+                  className="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-gray-950 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-100 sm:mt-0 sm:w-auto transition-colors cursor-pointer"
                 >
                   ยกเลิก
                 </button>
@@ -550,6 +518,12 @@ export default function AdminModal({
         banners={banners}
         onUploadBanner={handleUploadBanner}
         onDeleteBanner={handleDeleteBanner}
+      />
+
+      <BranchManagerModal
+        isOpen={isBranchManagerOpen}
+        onClose={() => setIsBranchManagerOpen(false)}
+        onShowToast={onShowToast}
       />
     </>
   );
