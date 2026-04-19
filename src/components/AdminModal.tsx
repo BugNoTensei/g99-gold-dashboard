@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogPanel,
@@ -37,6 +37,7 @@ interface Props {
   isUsingLocal: boolean;
   userRole: "branch" | "admin" | null;
   fetchPrice: () => Promise<void>;
+  branchId: string;
 }
 
 export default function AdminModal({
@@ -52,6 +53,7 @@ export default function AdminModal({
   isUsingLocal,
   userRole,
   fetchPrice,
+  branchId,
 }: Props) {
   const [formData, setFormData] = useState({
     barBuy: "",
@@ -67,24 +69,47 @@ export default function AdminModal({
   const [isBranchManagerOpen, setIsBranchManagerOpen] = useState(false);
   const [banners, setBanners] = useState<Banner[]>([]);
 
-  const fetchBanners = async () => {
+  const [useAdminBanners, setUseAdminBanners] = useState(() => {
+    return (
+      localStorage.getItem(`g99_use_admin_banners_${branchId}`) !== "false"
+    );
+  });
+
+  const fetchBanners = useCallback(async () => {
     if (supabase) {
-      const branchId = localStorage.getItem("g99_branch_id") || "main";
+      const targetBranch =
+        userRole === "admin" ? "main" : useAdminBanners ? "main" : branchId;
       const { data, error } = await supabase
         .from("branch_promotions")
         .select("id, image_url")
-        .eq("branch_id", branchId)
+        .eq("branch_id", targetBranch)
         .order("created_at", { ascending: false });
 
       if (!error && data) {
-        setBanners(data.map((b) => ({ id: b.id, url: b.image_url })));
+        setBanners(
+          data.map((b) => ({
+            id: b.id,
+            url: `${b.image_url}?t=${new Date().getTime()}`,
+          })),
+        );
+      } else {
+        setBanners([]);
       }
     }
-  };
+  }, [userRole, branchId, useAdminBanners]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      `g99_use_admin_banners_${branchId}`,
+      String(useAdminBanners),
+    );
+    fetchBanners();
+  }, [useAdminBanners, fetchBanners, branchId]);
 
   const handleUploadBanner = async (file: File) => {
     try {
-      await uploadPromotionBanner(file);
+      const targetBranch = userRole === "admin" ? "main" : branchId;
+      await uploadPromotionBanner(file, targetBranch);
       await fetchBanners();
       onShowToast("เพิ่มรูปโฆษณาสำเร็จ", "success");
     } catch {
@@ -96,7 +121,8 @@ export default function AdminModal({
     try {
       const bannerToDelete = banners.find((b) => b.id === id);
       if (bannerToDelete) {
-        await deletePromotionBanner(id, bannerToDelete.url);
+        const targetBranch = userRole === "admin" ? "main" : branchId;
+        await deletePromotionBanner(id, bannerToDelete.url, targetBranch);
         setBanners(banners.filter((b) => b.id !== id));
         onShowToast("ลบรูปโฆษณาสำเร็จ", "success");
       }
@@ -119,7 +145,7 @@ export default function AdminModal({
       setShowConfirm(false);
       fetchBanners();
     }
-  }, [isOpen, currentPrices, userRole]);
+  }, [isOpen, currentPrices, userRole, fetchBanners]);
 
   const handleInputChange = (
     field: "barBuy" | "barSale" | "ornaReturn",
@@ -130,7 +156,6 @@ export default function AdminModal({
       [field]: value,
       ...(field === "barBuy" ? { ornaReturn: "" } : {}),
     }));
-
     if (userRole === "admin" && isAutoFetch) {
       onToggleAutoFetch(false);
     }
@@ -518,6 +543,9 @@ export default function AdminModal({
         banners={banners}
         onUploadBanner={handleUploadBanner}
         onDeleteBanner={handleDeleteBanner}
+        userRole={userRole}
+        useAdminBanners={useAdminBanners}
+        onToggleAdminBanners={setUseAdminBanners}
       />
 
       <BranchManagerModal

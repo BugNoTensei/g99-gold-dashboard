@@ -4,11 +4,11 @@ import PriceRow from "./components/PriceRow";
 import AdsSlider from "./components/AdsSlider";
 import AdminModal from "./components/AdminModal";
 import PinModal from "./components/PinModal";
+import { useOrientation } from "./hooks/useOrientation";
 import PortraitTVLayout from "./components/PortraitTVLayout";
 import SetupScreen from "./components/SetupScreen";
 import { APP_CONFIG } from "./config";
 import { useGoldPrice } from "./hooks/useGoldPrice";
-import { useOrientation } from "./hooks/useOrientation";
 import { supabase } from "./config/supabase";
 import { checkBranchExists } from "./services/api";
 import {
@@ -36,7 +36,7 @@ export default function App() {
     type: "success" | "error";
   } | null>(null);
   const [userRole, setUserRole] = useState<"branch" | "admin" | null>(null);
-  const [displayAds, setDisplayAds] = useState<string[]>(APP_CONFIG.ADS_IMAGES);
+  const [displayAds, setDisplayAds] = useState<string[]>([]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playCountRef = useRef<number>(1);
@@ -72,17 +72,24 @@ export default function App() {
     const fetchAds = async () => {
       if (!isSystemReady || !supabase || !branchConfig) return;
 
+      const useAdmin =
+        localStorage.getItem(
+          `g99_use_Headoffice_banners_${branchConfig.id}`,
+        ) !== "false";
+      const targetBranch = useAdmin ? "main" : branchConfig.id;
+
       const { data } = await supabase
         .from("branch_promotions")
         .select("image_url")
-        .eq("branch_id", branchConfig.id)
-        .eq("is_active", true)
+        .eq("branch_id", targetBranch)
         .order("created_at", { ascending: false });
 
       if (data && data.length > 0) {
-        setDisplayAds(data.map((item) => item.image_url));
+        setDisplayAds(
+          data.map((item) => `${item.image_url}?t=${new Date().getTime()}`),
+        );
       } else {
-        setDisplayAds(APP_CONFIG.ADS_IMAGES);
+        setDisplayAds([]);
       }
     };
 
@@ -171,7 +178,7 @@ export default function App() {
 
   const dateObj = prices.priceAt ? new Date(prices.priceAt) : null;
   const displayTime = dateObj
-    ? `ข้อมูลล่าสุด ณ วันที่ ${dateObj.toLocaleDateString("th-TH", { year: "numeric", month: "2-digit", day: "2-digit" })} เวลา ${dateObj.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} น.`
+    ? `ข้อมูลล่าสุด ณ วันที่ ${dateObj.toLocaleDateString("th-TH", { year: "numeric", month: "2-digit", day: "2-digit" })} เวลา ${dateObj.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })} น.`
     : "กำลังอัปเดตข้อมูล...";
 
   if (!branchConfig) {
@@ -189,7 +196,7 @@ export default function App() {
             <span className="text-white text-xs md:text-sm font-medium tracking-wide">
               {userRole === "admin"
                 ? "Admin Mode"
-                : `${branchConfig.name} Mode`}
+                : `สาขา-${branchConfig.name}`}
             </span>
           </div>
           <div className="w-px h-4 bg-white/30" />
@@ -317,14 +324,11 @@ export default function App() {
         isUsingLocal={isUsingLocal}
         userRole={userRole}
         fetchPrice={fetchPrice}
+        branchId={branchConfig.id}
       />
 
       <div
-        className={`fixed top-8 right-8 z-10000 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl text-white font-medium min-w-[320px] ${
-          toast
-            ? "translate-x-0 opacity-100 scale-100"
-            : "translate-x-[150%] opacity-0 scale-90"
-        } ${toast?.type === "success" ? "bg-green-600" : "bg-red-600"}`}
+        className={`fixed top-8 right-8 z-10000 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl text-white font-medium min-w-[320px] ${toast ? "translate-x-0 opacity-100 scale-100" : "translate-x-[150%] opacity-0 scale-90"} ${toast?.type === "success" ? "bg-green-600" : "bg-red-600"}`}
       >
         {toast?.type === "success" ? (
           <CheckCircleIcon

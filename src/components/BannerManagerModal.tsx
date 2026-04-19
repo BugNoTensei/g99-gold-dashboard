@@ -6,8 +6,16 @@ import {
   DialogBackdrop,
   Transition,
   TransitionChild,
+  Switch,
 } from "@headlessui/react";
-import { X, Trash, Plus, CircleNotch, Warning } from "@phosphor-icons/react";
+import {
+  X,
+  Trash,
+  Plus,
+  CircleNotch,
+  Warning,
+  Buildings,
+} from "@phosphor-icons/react";
 
 export interface Banner {
   id: string;
@@ -21,6 +29,9 @@ interface Props {
   banners: Banner[];
   onUploadBanner: (file: File) => Promise<void>;
   onDeleteBanner: (id: string) => Promise<void>;
+  userRole: "admin" | "branch" | null;
+  useAdminBanners: boolean;
+  onToggleAdminBanners: (val: boolean) => void;
 }
 
 export function BannerManagerModal({
@@ -30,11 +41,16 @@ export function BannerManagerModal({
   banners,
   onUploadBanner,
   onDeleteBanner,
+  userRole,
+  useAdminBanners,
+  onToggleAdminBanners,
 }: Props) {
   const [isUploading, setIsUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isReadOnly = userRole === "branch" && useAdminBanners;
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -47,20 +63,6 @@ export function BannerManagerModal({
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!confirmDeleteId) return;
-    const id = confirmDeleteId;
-    setConfirmDeleteId(null);
-    setDeletingId(id);
-    try {
-      await onDeleteBanner(id);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setDeletingId(null);
     }
   };
 
@@ -89,14 +91,19 @@ export function BannerManagerModal({
                 leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
               >
-                <DialogPanel className="relative w-full max-w-3xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8">
+                <DialogPanel className="relative w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8">
                   <div className="border-b border-gray-100 px-6 py-5 flex items-center justify-between bg-white sticky top-0 z-10">
                     <div>
                       <DialogTitle
                         as="h3"
                         className="text-xl font-bold text-gray-900"
                       >
-                        จัดการป้ายโฆษณา (Carousel)
+                        จัดการป้ายโฆษณา{" "}
+                        {isReadOnly && (
+                          <span className="text-sm font-normal text-red-600 bg-red-50 px-2 py-1 rounded ml-2">
+                            โหมดอ่านอย่างเดียว
+                          </span>
+                        )}
                       </DialogTitle>
                       <p className="text-sm text-gray-500 mt-1">
                         สาขา: {branchName}
@@ -104,14 +111,45 @@ export function BannerManagerModal({
                     </div>
                     <button
                       onClick={onClose}
-                      className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
+                      className="rounded-full p-2 text-gray-400 hover:bg-gray-100 cursor-pointer transition-colors"
                     >
                       <X size={20} weight="bold" />
                     </button>
                   </div>
 
-                  <div className="p-6 bg-gray-50 min-h-100">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  {userRole === "branch" && (
+                    <div className="bg-amber-50/50 px-6 py-4 border-b border-amber-100 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Buildings
+                          size={24}
+                          className="text-amber-600"
+                          weight="fill"
+                        />
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">
+                            ใช้โปรโมชันจากสำนักงานใหญ่
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            หากเปิดใช้งาน
+                            จะดึงรูปภาพจากส่วนกลางมาแสดงแทนรูปของสาขา
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={useAdminBanners}
+                        onChange={onToggleAdminBanners}
+                        className={`group relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${useAdminBanners ? "bg-amber-500" : "bg-gray-300"}`}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${useAdminBanners ? "translate-x-5" : "translate-x-0"}`}
+                        />
+                      </Switch>
+                    </div>
+                  )}
+
+                  <div className="p-6 bg-gray-50 min-h-75">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {banners.map((banner) => (
                         <div
                           key={banner.id}
@@ -122,70 +160,63 @@ export function BannerManagerModal({
                             alt="Banner"
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                           />
-                          <div className="absolute inset-0 bg-linear-to-t from-gray-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
-                            <button
-                              onClick={() => setConfirmDeleteId(banner.id)}
-                              disabled={deletingId === banner.id}
-                              className="flex items-center justify-center gap-2 w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
-                            >
-                              {deletingId === banner.id ? (
-                                <CircleNotch
-                                  size={16}
-                                  className="animate-spin"
-                                />
-                              ) : (
-                                <Trash size={16} weight="bold" />
-                              )}
-                              ลบรูปภาพ
-                            </button>
-                          </div>
+                          {!isReadOnly && (
+                            <div className="absolute inset-0 bg-linear-to-t from-gray-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
+                              <button
+                                onClick={() => setConfirmDeleteId(banner.id)}
+                                disabled={deletingId === banner.id}
+                                className="flex items-center justify-center gap-2 w-full bg-red-600/90 hover:bg-red-700 text-white py-1.5 rounded-lg text-sm font-semibold backdrop-blur-sm cursor-pointer"
+                              >
+                                {deletingId === banner.id ? (
+                                  <CircleNotch
+                                    size={16}
+                                    className="animate-spin"
+                                  />
+                                ) : (
+                                  <Trash size={16} />
+                                )}{" "}
+                                ลบ
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))}
 
-                      <div
-                        onClick={() =>
-                          !isUploading && fileInputRef.current?.click()
-                        }
-                        className="aspect-4/3 rounded-xl border-2 border-dashed border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 flex flex-col items-center justify-center cursor-pointer transition-colors group relative overflow-hidden"
-                      >
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleFileSelect}
-                          accept="image/*"
-                          className="hidden"
-                        />
-                        {isUploading ? (
-                          <div className="flex flex-col items-center text-gray-400">
-                            <CircleNotch
-                              size={32}
-                              className="animate-spin mb-3 text-gray-900"
-                            />
-                            <span className="text-sm font-medium text-gray-900">
-                              กำลังอัปเดต...
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center text-gray-400 group-hover:text-gray-600 transition-colors">
-                            <div className="p-3 bg-gray-50 rounded-full mb-3 group-hover:bg-white shadow-sm border border-transparent group-hover:border-gray-200 transition-all">
-                              <Plus size={24} weight="bold" />
+                      {!isReadOnly && (
+                        <div
+                          onClick={() =>
+                            !isUploading && fileInputRef.current?.click()
+                          }
+                          className="aspect-4/3 rounded-xl border-2 border-dashed border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 flex flex-col items-center justify-center cursor-pointer transition-colors group"
+                        >
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileSelect}
+                            accept="image/*"
+                            className="hidden"
+                          />
+                          {isUploading ? (
+                            <div className="flex flex-col items-center">
+                              <CircleNotch
+                                size={24}
+                                className="animate-spin mb-2"
+                              />
+                              <span className="text-xs font-medium">
+                                อัปโหลด...
+                              </span>
                             </div>
-                            <span className="text-sm font-semibold text-gray-900">
-                              เพิ่มรูปโฆษณา
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                          ) : (
+                            <div className="flex flex-col items-center text-gray-400 group-hover:text-gray-600">
+                              <Plus size={24} className="mb-2" />
+                              <span className="text-xs font-semibold">
+                                เพิ่มรูปใหม่
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
-
-                  <div className="bg-white px-6 py-4 flex justify-end border-t border-gray-100">
-                    <button
-                      onClick={onClose}
-                      className="rounded-lg bg-gray-950 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 transition-colors cursor-pointer"
-                    >
-                      เสร็จสิ้น
-                    </button>
                   </div>
                 </DialogPanel>
               </TransitionChild>
@@ -236,24 +267,28 @@ export function BannerManagerModal({
                     >
                       ยืนยันการลบรูปภาพ?
                     </DialogTitle>
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-500 leading-relaxed">
-                        การดำเนินการนี้ไม่สามารถย้อนกลับได้ <br />
-                        รูปภาพจะถูกลบออกจากระบบทันที
-                      </p>
-                    </div>
                   </div>
                   <div className="mt-6 flex flex-col gap-2">
                     <button
                       type="button"
-                      className="inline-flex w-full justify-center rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-red-700 focus:outline-none transition-colors cursor-pointer"
-                      onClick={handleConfirmDelete}
+                      className="inline-flex w-full justify-center rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-red-700 cursor-pointer"
+                      onClick={async () => {
+                        if (!confirmDeleteId) return;
+                        const id = confirmDeleteId;
+                        setConfirmDeleteId(null);
+                        setDeletingId(id);
+                        try {
+                          await onDeleteBanner(id);
+                        } finally {
+                          setDeletingId(null);
+                        }
+                      }}
                     >
                       ยืนยันการลบ
                     </button>
                     <button
                       type="button"
-                      className="inline-flex w-full justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="inline-flex w-full justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer"
                       onClick={() => setConfirmDeleteId(null)}
                     >
                       ยกเลิก
