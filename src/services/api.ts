@@ -52,10 +52,10 @@ export const getBranches = async (): Promise<Branch[]> => {
 
 export const setupBranchInitial = async (branchId: string, pin: string) => {
   if (!supabase) return;
-  const { error } = await supabase
-    .from("branches")
-    .update({ branch_pin: pin, is_configured: true })
-    .eq("id", branchId);
+  const { error } = await supabase.rpc("setup_branch_secure", {
+    p_branch_id: branchId,
+    p_new_pin: pin,
+  });
   if (error) throw error;
 };
 
@@ -136,32 +136,28 @@ export const verifyBranchPin = async (
 ): Promise<boolean> => {
   if (!supabase) return false;
 
-  const { data, error } = await supabase
-    .from("branches")
-    .select("branch_pin")
-    .eq("id", branchId)
-    .single();
+  const { data, error } = await supabase.rpc("verify_branch_pin", {
+    p_branch_id: branchId,
+    p_pin: inputPin,
+  });
 
-  if (error || !data) return false;
-
-  return data.branch_pin === inputPin;
+  if (error) return false;
+  return !!data;
 };
 
 export const verifyAdminPin = async (inputPin: string): Promise<boolean> => {
   if (!supabase) return false;
 
-  const { data, error } = await supabase
-    .from("auth_pins")
-    .select("pin")
-    .limit(1)
-    .single();
+  const { data, error } = await supabase.rpc("verify_admin_pin", {
+    p_pin: inputPin,
+  });
 
-  if (error || !data) {
-    console.error("Error fetching admin pin:", error);
+  if (error) {
+    console.error("Error verifying admin pin:", error);
     return false;
   }
 
-  return data.pin === inputPin;
+  return !!data;
 };
 
 export const resetBranchPin = async (
