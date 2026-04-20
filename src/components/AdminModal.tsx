@@ -103,7 +103,10 @@ export default function AdminModal({
       `g99_use_admin_banners_${branchId}`,
       String(useAdminBanners),
     );
-    fetchBanners();
+    const loadBanners = async () => {
+      await fetchBanners();
+    };
+    loadBanners();
   }, [useAdminBanners, fetchBanners, branchId]);
 
   const handleUploadBanner = async (file: File) => {
@@ -131,21 +134,45 @@ export default function AdminModal({
     }
   };
 
+  // -------------------------------------------------------------
+  // วิธีแก้ที่ 1: หุ้มฟังก์ชัน Fetch ด้วย async ภายใน useEffect
+  // -------------------------------------------------------------
+  useEffect(() => {
+    localStorage.setItem(
+      `g99_use_admin_banners_${branchId}`,
+      String(useAdminBanners),
+    );
+    const loadBanners = async () => {
+      await fetchBanners();
+    };
+    loadBanners();
+  }, [useAdminBanners, fetchBanners, branchId]);
+
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  if (isOpen && !prevIsOpen) {
+    setPrevIsOpen(true);
+    setFormData({
+      barBuy: currentPrices.barBuy > 0 ? String(currentPrices.barBuy) : "",
+      barSale: currentPrices.barSale > 0 ? String(currentPrices.barSale) : "",
+      ornaReturn:
+        currentPrices.ornaReturn > 0 ? String(currentPrices.ornaReturn) : "",
+    });
+    if (userRole === "branch") {
+      setSaveMode("branch");
+    }
+    setShowConfirm(false);
+  } else if (!isOpen && prevIsOpen) {
+    setPrevIsOpen(false);
+  }
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        barBuy: currentPrices.barBuy > 0 ? String(currentPrices.barBuy) : "",
-        barSale: currentPrices.barSale > 0 ? String(currentPrices.barSale) : "",
-        ornaReturn:
-          currentPrices.ornaReturn > 0 ? String(currentPrices.ornaReturn) : "",
-      });
-      if (userRole === "branch") {
-        setSaveMode("branch");
-      }
-      setShowConfirm(false);
-      fetchBanners();
+      const loadInitialBanners = async () => {
+        await fetchBanners();
+      };
+      loadInitialBanners();
     }
-  }, [isOpen, currentPrices, userRole, fetchBanners]);
+  }, [isOpen, fetchBanners]);
 
   const handleInputChange = (
     field: "barBuy" | "barSale" | "ornaReturn",

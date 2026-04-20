@@ -72,13 +72,25 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
     }
   }, [onShowToast]);
 
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  if (isOpen && !prevIsOpen) {
+    setPrevIsOpen(true);
+    setNewBranchName("");
+    setSearchQuery("");
+    setConfirmPin("");
+    setModalNewPin("");
+    setPendingAction(null);
+  } else if (!isOpen && prevIsOpen) {
+    setPrevIsOpen(false);
+  }
+
   useEffect(() => {
     if (isOpen) {
-      fetchBranches();
-      setNewBranchName("");
-      setSearchQuery("");
-      setConfirmPin("");
-      setModalNewPin("");
+      const loadInitialBranches = async () => {
+        await fetchBranches();
+      };
+      loadInitialBranches();
     }
   }, [isOpen, fetchBranches]);
 
