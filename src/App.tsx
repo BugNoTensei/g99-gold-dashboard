@@ -72,10 +72,10 @@ export default function App() {
     const fetchAds = async () => {
       if (!isSystemReady || !supabase || !branchConfig) return;
 
-      const useAdmin =
-        localStorage.getItem(
-          `g99_use_Headoffice_banners_${branchConfig.id}`,
-        ) !== "false";
+      const storedValue = localStorage.getItem(
+        `g99_use_admin_banners_${branchConfig.id}`,
+      );
+      const useAdmin = storedValue === null ? true : storedValue !== "false";
       const targetBranch = useAdmin ? "main" : branchConfig.id;
 
       const { data } = await supabase
@@ -94,6 +94,23 @@ export default function App() {
     };
 
     fetchAds();
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === `g99_use_admin_banners_${branchConfig?.id}`) {
+        fetchAds();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    const interval = setInterval(() => {
+      fetchAds();
+    }, 3000);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
   }, [isSystemReady, isModalOpen, branchConfig]);
 
   useEffect(() => {
