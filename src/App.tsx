@@ -97,24 +97,6 @@ export default function App() {
     };
 
     fetchAds();
-
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === `g99_use_admin_banners_${branchConfig?.id}`) {
-        setIsAdsLoading(true);
-        fetchAds();
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    const interval = setInterval(() => {
-      fetchAds();
-    }, 3000);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      clearInterval(interval);
-    };
   }, [isSystemReady, isModalOpen, branchConfig]);
 
   useEffect(() => {
