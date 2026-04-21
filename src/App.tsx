@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import PriceCategory from "./components/PriceCategory";
 import PriceRow from "./components/PriceRow";
 import AdsSlider from "./components/AdsSlider";
@@ -16,6 +16,7 @@ import {
   WarningCircleIcon,
   DeviceMobileIcon,
   ArrowsClockwiseIcon,
+  ImagesIcon,
 } from "@phosphor-icons/react";
 
 export default function App() {
@@ -37,6 +38,7 @@ export default function App() {
   } | null>(null);
   const [userRole, setUserRole] = useState<"branch" | "admin" | null>(null);
   const [displayAds, setDisplayAds] = useState<string[]>([]);
+  const [isAdsLoading, setIsAdsLoading] = useState(true);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playCountRef = useRef<number>(1);
@@ -44,13 +46,13 @@ export default function App() {
   const { orientation, isDesktopOrTV } = useOrientation();
   const isPortrait = orientation === "portrait";
 
-  const showToast = (
-    message: string,
-    type: "success" | "error" = "success",
-  ) => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+  const showToast = useCallback(
+    (message: string, type: "success" | "error" = "success") => {
+      setToast({ message, type });
+      setTimeout(() => setToast(null), 3000);
+    },
+    [],
+  );
 
   useEffect(() => {
     const validateSession = async () => {
@@ -66,7 +68,7 @@ export default function App() {
       }
     };
     validateSession();
-  }, [branchConfig?.id]);
+  }, [branchConfig?.id, showToast]);
 
   useEffect(() => {
     const fetchAds = async () => {
@@ -91,12 +93,14 @@ export default function App() {
       } else {
         setDisplayAds([]);
       }
+      setIsAdsLoading(false);
     };
 
     fetchAds();
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === `g99_use_admin_banners_${branchConfig?.id}`) {
+        setIsAdsLoading(true);
         fetchAds();
       }
     };
@@ -135,7 +139,7 @@ export default function App() {
     }
   }, []);
 
-  const handlePriceChange = () => {
+  const handlePriceChange = useCallback(() => {
     if (audioRef.current) {
       playCountRef.current = 1;
       audioRef.current.currentTime = 0;
@@ -143,7 +147,7 @@ export default function App() {
     }
     setPanelOpacity(0.7);
     setTimeout(() => setPanelOpacity(1), 300);
-  };
+  }, []);
 
   const {
     prices,
@@ -307,13 +311,29 @@ export default function App() {
             </div>
           </div>
 
-          <div className="w-1/2 h-full relative bg-black">
-            <AdsSlider
-              images={displayAds}
-              interval={APP_CONFIG.SLIDER_INTERVAL_MS}
-              onOpenSettings={handleOpenSettings}
-              onToggleFullscreen={handleToggleFullscreen}
-            />
+          <div className="w-1/2 h-full relative bg-black flex items-center justify-center">
+            {isAdsLoading ? (
+              <div className="flex flex-col items-center gap-4 text-gold-light/70 animate-pulse">
+                <ArrowsClockwiseIcon size={48} className="animate-spin mb-2" />
+                <p className="text-xl font-medium">กำลังโหลดรูปภาพ...</p>
+              </div>
+            ) : displayAds.length > 0 ? (
+              <AdsSlider
+                images={displayAds}
+                interval={APP_CONFIG.SLIDER_INTERVAL_MS}
+                onOpenSettings={handleOpenSettings}
+                onToggleFullscreen={handleToggleFullscreen}
+              />
+            ) : (
+              <div
+                className="flex flex-col items-center text-center gap-3 text-white/30 cursor-pointer hover:text-white/60 transition-colors p-8"
+                onClick={handleOpenSettings}
+              >
+                <ImagesIcon size={80} weight="light" className="mb-2" />
+                <p className="text-2xl font-medium">ยังไม่มีรูปภาพโฆษณา</p>
+                <p className="text-sm">(คลิกหน้าจอเพื่อตั้งค่ารูปภาพ)</p>
+              </div>
+            )}
           </div>
         </>
       )}
