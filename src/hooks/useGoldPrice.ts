@@ -6,15 +6,30 @@ import {
 } from "../services/api";
 import { supabase } from "../config/supabase";
 
+const LOCAL_STORAGE_KEY = "g99_local_branch_price";
+
+type GoldPricesWithTime = GoldPrices & { update_time?: string };
+
 export function useGoldPrice(
   isSystemReady: boolean,
   onPriceUpdated?: () => void,
 ) {
-  const [prices, setPrices] = useState<GoldPrices>({
+  const [centralPrices, setCentralPrices] = useState<GoldPrices>({
     barBuy: 0,
     barSale: 0,
     ornaReturn: 0,
   });
+
+  const [localPrices, setLocalPrices] = useState<GoldPrices | null>(() => {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [isAutoFetch, setIsAutoFetch] = useState<boolean>(() => {
+    const saved = localStorage.getItem("autoFetchGold");
+    return saved !== null ? saved === "true" : true;
+  });
+
   const lastUpdateKey = useRef<string>("");
   const realtimeTimeout = useRef<number | null>(null);
   const onPriceUpdatedRef = useRef(onPriceUpdated);
@@ -23,38 +38,95 @@ export function useGoldPrice(
     onPriceUpdatedRef.current = onPriceUpdated;
   }, [onPriceUpdated]);
 
+  useEffect(() => {
+    localStorage.setItem("autoFetchGold", String(isAutoFetch));
+  }, [isAutoFetch]);
+
+  const prices = localPrices || centralPrices;
+  const isUsingLocal = localPrices !== null;
+
   const fetchPrice = useCallback(async () => {
     try {
       const data = await getGoldPrices();
-
       if (!data || !data.barBuy || data.barBuy <= 0) return;
 
+      const dataWithTime = data as GoldPricesWithTime;
       const currentKey =
-        data.priceAt || `${data.barBuy}-${data.barSale}-${data.ornaReturn}`;
+        dataWithTime.priceAt ||
+        dataWithTime.update_time ||
+        `${data.barBuy}-${data.barSale}-${data.ornaReturn}`;
 
       if (
         lastUpdateKey.current !== "" &&
         lastUpdateKey.current !== currentKey
       ) {
-        if (onPriceUpdatedRef.current) onPriceUpdatedRef.current();
+        if (!isUsingLocal && onPriceUpdatedRef.current) {
+          onPriceUpdatedRef.current();
+        }
       }
 
       lastUpdateKey.current = currentKey;
-      setPrices(data);
-    } catch {
-      /* ignore */
+      setCentralPrices(data);
+    } catch (error) {
+      console.error(error);
     }
-  }, []);
+  }, [isUsingLocal]);
 
-  const handleSavePrice = async (payload: GoldPrices) => {
+  const saveBranchPrice = (payload: GoldPrices) => {
+    setLocalPrices(payload);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
+    if (onPriceUpdatedRef.current) onPriceUpdatedRef.current();
+  };
+
+  const saveAdminPrice = async (
+    payload: GoldPrices,
+    forceUpdateAll: boolean,
+  ) => {
     await updateGoldPrices(payload);
+
+    try {
+      await fetch("https://g99pawnpay.golden99.co.th/gold-price", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          barSale: Number(payload.barSale),
+          barBuy: Number(payload.barBuy),
+        }),
+      });
+    } catch (error) {
+      console.error(error);
+    }
+
+    if (forceUpdateAll && supabase) {
+      await supabase.channel("gold-price-updates").send({
+        type: "broadcast",
+        event: "force_clear_local",
+        payload: { message: "Admin forced update" },
+      });
+    }
+
     fetchPrice();
+  };
+
+  const clearLocalPrice = () => {
+    setLocalPrices(null);
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    if (onPriceUpdatedRef.current) onPriceUpdatedRef.current();
   };
 
   useEffect(() => {
     if (!isSystemReady) return;
 
-    const interval = window.setInterval(fetchPrice, 300000);
+    let interval: number | undefined;
+
+    const loadInitialData = async () => {
+      await fetchPrice();
+    };
+    loadInitialData();
+
+    if (isAutoFetch) {
+      interval = window.setInterval(fetchPrice, 300000);
+    }
 
     if (supabase) {
       const channel = supabase
@@ -71,17 +143,31 @@ export function useGoldPrice(
             }, 1000);
           },
         )
+        .on("broadcast", { event: "force_clear_local" }, () => {
+          clearLocalPrice();
+          fetchPrice();
+        })
         .subscribe();
 
       return () => {
-        window.clearInterval(interval);
-        if (channel) {
-          supabase?.removeChannel(channel);
-        }
+        if (interval) window.clearInterval(interval);
+        if (channel) supabase?.removeChannel(channel);
       };
     }
-    return () => window.clearInterval(interval);
-  }, [isSystemReady, fetchPrice]);
 
-  return { prices, fetchPrice, handleSavePrice };
+    return () => {
+      if (interval) window.clearInterval(interval);
+    };
+  }, [isSystemReady, isAutoFetch, fetchPrice]);
+
+  return {
+    prices,
+    fetchPrice,
+    isAutoFetch,
+    setIsAutoFetch,
+    isUsingLocal,
+    saveBranchPrice,
+    saveAdminPrice,
+    clearLocalPrice,
+  };
 }

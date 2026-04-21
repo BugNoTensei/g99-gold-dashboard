@@ -9,6 +9,14 @@ export interface GoldPrices {
   barSale: number;
   ornaReturn: number;
   priceAt?: string;
+  update_time?: string;
+}
+
+export interface Branch {
+  id: string;
+  branch_name: string;
+  branch_pin: string;
+  is_configured: boolean;
 }
 
 export const getGoldPrices = async (): Promise<GoldPrices> => {
@@ -25,8 +33,178 @@ export const updateGoldPrices = async (payload: GoldPrices) => {
       p_bar_sell: payload.barSale,
       p_ornament_buy: payload.ornaReturn,
       p_pin: PIN,
+      p_source: "G99_Dashboard",
     });
 
     if (error) throw error;
   }
+};
+
+export const getBranches = async (): Promise<Branch[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("branches")
+    .select("*")
+    .order("branch_name", { ascending: true });
+  if (error) throw error;
+  return data || [];
+};
+
+export const setupBranchInitial = async (branchId: string, pin: string) => {
+  if (!supabase) return;
+  const { error } = await supabase.rpc("setup_branch_secure", {
+    p_branch_id: branchId,
+    p_new_pin: pin,
+  });
+  if (error) throw error;
+};
+
+export const addNewBranchByAdmin = async (name: string, adminPin: string) => {
+  if (!supabase) return;
+
+  const { error } = await supabase.rpc("add_new_branch_secure", {
+    p_branch_name: name.trim(),
+    p_admin_pin: adminPin,
+  });
+
+  if (error) {
+    if (error.message.includes("Invalid Admin PIN")) {
+      throw new Error("รหัสผ่านผู้ดูแลระบบ (Admin PIN) ไม่ถูกต้อง");
+    }
+    if (error.code === "23505") {
+      throw new Error("ชื่อสาขานี้มีในระบบแล้ว");
+    }
+    throw error;
+  }
+};
+
+export const uploadPromotionBanner = async (
+  file: File,
+  branchId: string = "main",
+) => {
+  if (!supabase) throw new Error("Supabase is not initialized");
+
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${branchId}/${Date.now()}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("promotions")
+    .upload(filePath, file, {
+      upsert: true,
+    });
+
+  if (uploadError) throw uploadError;
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("promotions").getPublicUrl(filePath);
+
+  const { error: dbError } = await supabase
+    .from("branch_promotions")
+    .insert([{ branch_id: branchId, image_url: publicUrl }]);
+
+  if (dbError) throw dbError;
+  return publicUrl;
+};
+
+export const deletePromotionBanner = async (
+  id: string,
+  imageUrl: string,
+  branchId: string = "main",
+) => {
+  if (!supabase) throw new Error("Supabase is not initialized");
+
+  const { error: dbError } = await supabase
+    .from("branch_promotions")
+    .delete()
+    .eq("id", id);
+
+  if (dbError) throw dbError;
+
+  const fileName = imageUrl.split("/").pop();
+  if (fileName) {
+    await supabase.storage
+      .from("promotions")
+      .remove([`${branchId}/${fileName}`]);
+  }
+};
+
+export const verifyBranchPin = async (
+  branchId: string,
+  inputPin: string,
+): Promise<boolean> => {
+  if (!supabase) return false;
+
+  const { data, error } = await supabase.rpc("verify_branch_pin", {
+    p_branch_id: branchId,
+    p_pin: inputPin,
+  });
+
+  if (error) return false;
+  return !!data;
+};
+
+export const verifyAdminPin = async (inputPin: string): Promise<boolean> => {
+  if (!supabase) return false;
+
+  const { data, error } = await supabase.rpc("verify_admin_pin", {
+    p_pin: inputPin,
+  });
+
+  if (error) {
+    console.error("Error verifying admin pin:", error);
+    return false;
+  }
+
+  return !!data;
+};
+
+export const resetBranchPin = async (
+  branchId: string,
+  adminPin: string,
+  newPin: string,
+) => {
+  if (!supabase) return;
+
+  const { error } = await supabase.rpc("reset_branch_pin_secure", {
+    p_branch_id: branchId,
+    p_admin_pin: adminPin,
+    p_new_pin: newPin,
+  });
+
+  if (error) {
+    if (error.message.includes("Invalid Admin PIN")) {
+      throw new Error("รหัสผ่านผู้ดูแลระบบ (Admin PIN) ไม่ถูกต้อง");
+    }
+    throw error;
+  }
+};
+
+export const deleteBranch = async (branchId: string, adminPin: string) => {
+  if (!supabase) return;
+
+  const { error } = await supabase.rpc("delete_branch_secure", {
+    p_branch_id: branchId,
+    p_admin_pin: adminPin,
+  });
+
+  if (error) {
+    if (error.message.includes("Invalid Admin PIN")) {
+      throw new Error("รหัสผ่านผู้ดูแลระบบ (Admin PIN) ไม่ถูกต้อง");
+    }
+    throw error;
+  }
+};
+export const checkBranchExists = async (branchId: string): Promise<boolean> => {
+  if (!supabase || !branchId) return false;
+
+  const { data, error } = await supabase
+    .from("branches")
+    .select("id")
+    .eq("id", branchId)
+    .maybeSingle();
+
+  if (error || !data) return false;
+  return true;
 };
