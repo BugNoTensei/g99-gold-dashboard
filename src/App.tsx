@@ -344,6 +344,7 @@ export default function App() {
         userRole={userRole}
         fetchPrice={fetchPrice}
         branchId={branchConfig.id}
+        branchName={branchConfig.name}
       />
 
       <div
