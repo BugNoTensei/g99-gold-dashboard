@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
 import {
   Dialog,
@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogBackdrop,
 } from "@headlessui/react";
-import { LockKey, CircleNotch } from "@phosphor-icons/react";
+import { LockKeyIcon, CircleNotchIcon } from "@phosphor-icons/react";
 import { supabase } from "../config/supabase";
 import { verifyBranchPin } from "../services/api";
 
@@ -27,12 +27,15 @@ export default function PinModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (isOpen) {
-      setPin("");
-      setError("");
-    }
-  }, [isOpen]);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  if (isOpen && !prevIsOpen) {
+    setPrevIsOpen(true);
+    setPin("");
+    setError("");
+  } else if (!isOpen && prevIsOpen) {
+    setPrevIsOpen(false);
+  }
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -98,7 +101,7 @@ export default function PinModal({
           >
             <div className="text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 border border-red-100 mb-4">
-                <LockKey size={28} weight="fill" className="text-red-600" />
+                <LockKeyIcon size={28} weight="fill" className="text-red-600" />
               </div>
               <DialogTitle
                 as="h3"
@@ -153,7 +156,7 @@ export default function PinModal({
                   className="flex-1 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition-colors focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 bg-gray-950 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isLoading ? (
-                    <CircleNotch size={18} className="animate-spin" />
+                    <CircleNotchIcon size={18} className="animate-spin" />
                   ) : (
                     "ยืนยัน"
                   )}

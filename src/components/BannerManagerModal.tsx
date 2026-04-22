@@ -9,14 +9,14 @@ import {
   Switch,
 } from "@headlessui/react";
 import {
-  X,
-  Trash,
-  Plus,
-  CircleNotch,
-  Warning,
-  Buildings,
-  ImagesSquare,
-  LockKey,
+  XIcon,
+  TrashIcon,
+  PlusIcon,
+  CircleNotchIcon,
+  WarningIcon,
+  BuildingsIcon,
+  ImagesSquareIcon,
+  LockKeyIcon,
 } from "@phosphor-icons/react";
 
 export interface Banner {
@@ -110,7 +110,7 @@ export function BannerManagerModal({
                           จัดการป้ายโฆษณา
                           {isReadOnly && (
                             <span className="text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-md border border-red-100 flex items-center gap-1">
-                              <LockKey weight="bold" />
+                              <LockKeyIcon weight="bold" />
                               โหมดอ่านอย่างเดียว
                             </span>
                           )}
@@ -126,7 +126,7 @@ export function BannerManagerModal({
                         onClick={onClose}
                         className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors"
                       >
-                        <X size={20} weight="bold" />
+                        <XIcon size={20} weight="bold" />
                       </button>
                     </div>
 
@@ -136,7 +136,7 @@ export function BannerManagerModal({
                           <div
                             className={`p-2 rounded-lg ${isAtLimit ? "bg-red-100 text-red-600" : "bg-white text-gray-700 shadow-sm border border-gray-200"}`}
                           >
-                            <ImagesSquare size={20} weight="fill" />
+                            <ImagesSquareIcon size={20} weight="fill" />
                           </div>
                           <div className="flex flex-col">
                             <span className="text-sm font-bold text-gray-900">
@@ -168,7 +168,7 @@ export function BannerManagerModal({
                   {userRole === "branch" && (
                     <div className="bg-amber-50/50 px-6 py-4 border-b border-amber-100 flex items-center justify-between shrink-0">
                       <div className="flex items-center gap-3">
-                        <Buildings
+                        <BuildingsIcon
                           size={24}
                           className="text-amber-600"
                           weight="fill"
@@ -216,12 +216,12 @@ export function BannerManagerModal({
                                 className="flex items-center justify-center gap-2 w-full bg-red-600/90 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-bold backdrop-blur-md cursor-pointer transition-colors"
                               >
                                 {deletingId === banner.id ? (
-                                  <CircleNotch
+                                  <CircleNotchIcon
                                     size={16}
                                     className="animate-spin"
                                   />
                                 ) : (
-                                  <Trash size={16} weight="bold" />
+                                  <TrashIcon size={16} weight="bold" />
                                 )}{" "}
                                 ลบรูปนี้
                               </button>
@@ -233,7 +233,7 @@ export function BannerManagerModal({
                       {!isReadOnly &&
                         (isAtLimit ? (
                           <div className="aspect-4/3 rounded-xl border-2 border-dashed border-red-200 bg-red-50/50 flex flex-col items-center justify-center opacity-80 select-none">
-                            <Warning
+                            <WarningIcon
                               size={28}
                               className="mb-2 text-red-400"
                               weight="fill"
@@ -261,7 +261,7 @@ export function BannerManagerModal({
                             />
                             {isUploading ? (
                               <div className="flex flex-col items-center text-gray-600">
-                                <CircleNotch
+                                <CircleNotchIcon
                                   size={28}
                                   className="animate-spin mb-2"
                                 />
@@ -271,7 +271,7 @@ export function BannerManagerModal({
                               </div>
                             ) : (
                               <div className="flex flex-col items-center text-gray-400 group-hover:text-gray-900 transition-colors">
-                                <Plus
+                                <PlusIcon
                                   size={28}
                                   weight="bold"
                                   className="mb-2"
@@ -322,7 +322,7 @@ export function BannerManagerModal({
                 <DialogPanel className="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-sm p-8">
                   <div className="flex flex-col items-center text-center">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 mb-5 border border-red-100">
-                      <Warning
+                      <WarningIcon
                         size={32}
                         weight="fill"
                         className="text-red-600"

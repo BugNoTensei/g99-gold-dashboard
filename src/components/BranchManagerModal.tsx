@@ -8,15 +8,15 @@ import {
   TransitionChild,
 } from "@headlessui/react";
 import {
-  X,
-  Plus,
-  Storefront,
-  CircleNotch,
-  Buildings,
-  LockKey,
-  Trash,
-  Warning,
-  MagnifyingGlass,
+  XIcon,
+  PlusIcon,
+  StorefrontIcon,
+  CircleNotchIcon,
+  BuildingsIcon,
+  LockKeyIcon,
+  TrashIcon,
+  WarningIcon,
+  MagnifyingGlassIcon,
 } from "@phosphor-icons/react";
 import { supabase } from "../config/supabase";
 import {
@@ -183,7 +183,7 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
                   <div className="border-b border-gray-100 px-8 py-6 flex items-center justify-between bg-white sticky top-0 z-10">
                     <div className="flex items-center gap-4">
                       <div className="flex-none rounded-2xl bg-amber-50 p-3 border border-amber-100 shadow-sm">
-                        <Storefront
+                        <StorefrontIcon
                           size={28}
                           weight="fill"
                           className="text-amber-600"
@@ -205,7 +205,7 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
                       onClick={onClose}
                       className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-colors cursor-pointer outline-none"
                     >
-                      <X size={24} weight="bold" />
+                      <XIcon size={24} weight="bold" />
                     </button>
                   </div>
 
@@ -213,7 +213,7 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       <div className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-200 self-start">
                         <div className="flex items-center gap-2 mb-4">
-                          <Buildings
+                          <BuildingsIcon
                             size={20}
                             weight="fill"
                             className="text-gray-700"
@@ -240,7 +240,7 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
                             disabled={!newBranchName.trim()}
                             className="w-full flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all"
                           >
-                            <Plus size={18} weight="bold" />
+                            <PlusIcon size={18} weight="bold" />
                             สร้างสาขา
                           </button>
                         </div>
@@ -253,7 +253,7 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
                               รายชื่อสาขา
                             </h3>
                             <div className="flex items-center gap-2 relative">
-                              <MagnifyingGlass
+                              <MagnifyingGlassIcon
                                 size={16}
                                 className="text-gray-400 absolute left-3"
                               />
@@ -269,7 +269,7 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
 
                           {isLoading ? (
                             <div className="p-12 flex justify-center items-center">
-                              <CircleNotch
+                              <CircleNotchIcon
                                 size={32}
                                 className="animate-spin text-amber-500"
                               />
@@ -289,7 +289,7 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
                                           : "bg-gray-100 border-gray-200 text-gray-400"
                                       }`}
                                     >
-                                      <Storefront
+                                      <StorefrontIcon
                                         size={16}
                                         weight={
                                           branch.is_configured
@@ -332,7 +332,7 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
                                       }
                                       className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
                                     >
-                                      <Trash size={18} weight="bold" />
+                                      <TrashIcon size={18} weight="bold" />
                                     </button>
                                   </div>
                                 </li>
@@ -400,9 +400,9 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
                       }`}
                     >
                       {pendingAction?.type === "delete" ? (
-                        <Warning size={32} weight="fill" />
+                        <WarningIcon size={32} weight="fill" />
                       ) : (
-                        <LockKey size={32} weight="fill" />
+                        <LockKeyIcon size={32} weight="fill" />
                       )}
                     </div>
                     <DialogTitle
@@ -478,7 +478,7 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
                       }`}
                     >
                       {isProcessing ? (
-                        <CircleNotch size={18} className="animate-spin" />
+                        <CircleNotchIcon size={18} className="animate-spin" />
                       ) : (
                         "ยืนยัน"
                       )}

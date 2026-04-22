@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Gear, CornersOut, Images } from "@phosphor-icons/react";
+import { GearIcon, CornersOutIcon, ImagesIcon } from "@phosphor-icons/react";
 import { APP_CONFIG } from "../config";
 
 interface Props {
@@ -38,7 +38,7 @@ export default function AdsSlider({
               className="h-24 md:h-32 mb-6 grayscale"
             />
           ) : (
-            <Images size={80} weight="thin" className="mb-4 text-white" />
+            <ImagesIcon size={80} weight="thin" className="mb-4 text-white" />
           )}
           <span className="text-xl md:text-2xl font-medium tracking-widest text-white">
             G99 GoldPrice Dashboard system
@@ -78,14 +78,14 @@ export default function AdsSlider({
           className="bg-black/50 hover:bg-black/80 text-white/80 hover:text-white border border-white/20 w-10 h-10 rounded-full flex items-center justify-center text-lg cursor-pointer transition-all active:scale-95 backdrop-blur-md"
           title="เต็มจอ"
         >
-          <CornersOut weight="bold" />
+          <CornersOutIcon weight="bold" />
         </button>
         <button
           onClick={onOpenSettings}
           className="bg-black/50 hover:bg-black/80 text-white/80 hover:text-white border border-white/20 w-10 h-10 rounded-full flex items-center justify-center text-lg cursor-pointer transition-all active:scale-95 backdrop-blur-md"
           title="ตั้งค่า"
         >
-          <Gear weight="bold" />
+          <GearIcon weight="bold" />
         </button>
       </div>
 

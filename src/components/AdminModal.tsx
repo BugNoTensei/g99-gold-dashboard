@@ -18,7 +18,7 @@ import {
   WarningCircleIcon,
   ArrowsClockwiseIcon,
   ImagesIcon,
-  Storefront,
+  StorefrontIcon,
 } from "@phosphor-icons/react";
 
 interface Props {
@@ -298,7 +298,7 @@ export default function AdminModal({
                   <div className="flex items-center justify-between p-4 bg-amber-50 rounded-xl border border-amber-200 shadow-sm">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-white rounded-lg shadow-sm border border-amber-100">
-                        <Storefront
+                        <StorefrontIcon
                           size={20}
                           className="text-amber-700"
                           weight="fill"
