@@ -18,7 +18,7 @@ import {
   WarningCircleIcon,
   ArrowsClockwiseIcon,
   ImagesIcon,
-  Storefront,
+  StorefrontIcon,
 } from "@phosphor-icons/react";
 
 interface Props {
@@ -38,6 +38,7 @@ interface Props {
   userRole: "branch" | "admin" | null;
   fetchPrice: () => Promise<void>;
   branchId: string;
+  branchName: string;
 }
 
 export default function AdminModal({
@@ -54,6 +55,7 @@ export default function AdminModal({
   userRole,
   fetchPrice,
   branchId,
+  branchName,
 }: Props) {
   const [formData, setFormData] = useState({
     barBuy: "",
@@ -296,7 +298,7 @@ export default function AdminModal({
                   <div className="flex items-center justify-between p-4 bg-amber-50 rounded-xl border border-amber-200 shadow-sm">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-white rounded-lg shadow-sm border border-amber-100">
-                        <Storefront
+                        <StorefrontIcon
                           size={20}
                           className="text-amber-700"
                           weight="fill"
@@ -566,7 +568,7 @@ export default function AdminModal({
       <BannerManagerModal
         isOpen={isBannerModalOpen}
         onClose={() => setIsBannerModalOpen(false)}
-        branchName={userRole === "admin" ? "ส่วนกลาง (Admin)" : "สาขาหน้าร้าน"}
+        branchName={userRole === "admin" ? "ส่วนกลาง (Admin)" : `${branchName}`}
         banners={banners}
         onUploadBanner={handleUploadBanner}
         onDeleteBanner={handleDeleteBanner}

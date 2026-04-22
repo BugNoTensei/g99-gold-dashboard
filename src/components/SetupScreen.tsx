@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Storefront,
-  LockKey,
+  StorefrontIcon,
+  LockKeyIcon,
   CheckCircleIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react";
@@ -92,7 +92,11 @@ export default function SetupScreen({ onSetupComplete }: Props) {
         <div className="space-y-6">
           <div>
             <label className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2">
-              <Storefront size={18} weight="bold" className="text-red-600" />
+              <StorefrontIcon
+                size={18}
+                weight="bold"
+                className="text-red-600"
+              />
               เลือกสาขาของคุณ
             </label>
             <select
@@ -115,7 +119,7 @@ export default function SetupScreen({ onSetupComplete }: Props) {
 
           <div>
             <label className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2">
-              <LockKey size={18} weight="bold" className="text-red-600" />
+              <LockKeyIcon size={18} weight="bold" className="text-red-600" />
               รหัสผ่านสาขา (PIN)
             </label>
             <input
