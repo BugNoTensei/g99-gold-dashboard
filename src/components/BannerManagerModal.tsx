@@ -15,6 +15,8 @@ import {
   CircleNotch,
   Warning,
   Buildings,
+  ImagesSquare,
+  LockKey,
 } from "@phosphor-icons/react";
 
 export interface Banner {
@@ -34,6 +36,8 @@ interface Props {
   onToggleAdminBanners: (val: boolean) => void;
 }
 
+const MAX_BANNERS = 5;
+
 export function BannerManagerModal({
   isOpen,
   onClose,
@@ -51,10 +55,14 @@ export function BannerManagerModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isReadOnly = userRole === "branch" && useAdminBanners;
+  const currentCount = banners.length;
+  const isAtLimit = currentCount >= MAX_BANNERS;
+  const progressPercentage = Math.min((currentCount / MAX_BANNERS) * 100, 100);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || isAtLimit) return;
+
     setIsUploading(true);
     try {
       await onUploadBanner(file);
@@ -91,34 +99,74 @@ export function BannerManagerModal({
                 leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
               >
-                <DialogPanel className="relative w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8">
-                  <div className="border-b border-gray-100 px-6 py-5 flex items-center justify-between bg-white sticky top-0 z-10">
-                    <div>
-                      <DialogTitle
-                        as="h3"
-                        className="text-xl font-bold text-gray-900"
-                      >
-                        จัดการป้ายโฆษณา{" "}
-                        {isReadOnly && (
-                          <span className="text-sm font-normal text-red-600 bg-red-50 px-2 py-1 rounded ml-2">
-                            โหมดอ่านอย่างเดียว
+                <DialogPanel className="relative w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 flex flex-col max-h-[90vh]">
+                  <div className="border-b border-gray-100 px-6 py-5 bg-white sticky top-0 z-10 shrink-0">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <DialogTitle
+                          as="h3"
+                          className="text-xl font-bold text-gray-900 flex items-center gap-2"
+                        >
+                          จัดการป้ายโฆษณา
+                          {isReadOnly && (
+                            <span className="text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-md border border-red-100 flex items-center gap-1">
+                              <LockKey weight="bold" />
+                              โหมดอ่านอย่างเดียว
+                            </span>
+                          )}
+                        </DialogTitle>
+                        <p className="text-sm text-gray-500 mt-1">
+                          สาขา:{" "}
+                          <span className="font-semibold text-gray-700">
+                            {branchName}
                           </span>
-                        )}
-                      </DialogTitle>
-                      <p className="text-sm text-gray-500 mt-1">
-                        สาขา: {branchName}
-                      </p>
+                        </p>
+                      </div>
+                      <button
+                        onClick={onClose}
+                        className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors"
+                      >
+                        <X size={20} weight="bold" />
+                      </button>
                     </div>
-                    <button
-                      onClick={onClose}
-                      className="rounded-full p-2 text-gray-400 hover:bg-gray-100 cursor-pointer transition-colors"
-                    >
-                      <X size={20} weight="bold" />
-                    </button>
+
+                    {!isReadOnly && (
+                      <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`p-2 rounded-lg ${isAtLimit ? "bg-red-100 text-red-600" : "bg-white text-gray-700 shadow-sm border border-gray-200"}`}
+                          >
+                            <ImagesSquare size={20} weight="fill" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold text-gray-900">
+                              จำนวนที่ยังสามารถอัปโหลดได้
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              สามารถใส่ได้สูงสุด {MAX_BANNERS} รูป
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-end min-w-35">
+                          <span
+                            className={`text-sm font-bold ${isAtLimit ? "text-red-600" : "text-gray-900"}`}
+                          >
+                            {currentCount} / {MAX_BANNERS} รูป
+                          </span>
+                          <div className="w-full h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ease-out ${isAtLimit ? "bg-red-500" : "bg-gray-900"}`}
+                              style={{ width: `${progressPercentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {userRole === "branch" && (
-                    <div className="bg-amber-50/50 px-6 py-4 border-b border-amber-100 flex items-center justify-between">
+                    <div className="bg-amber-50/50 px-6 py-4 border-b border-amber-100 flex items-center justify-between shrink-0">
                       <div className="flex items-center gap-3">
                         <Buildings
                           size={24}
@@ -127,7 +175,7 @@ export function BannerManagerModal({
                         />
                         <div>
                           <p className="font-semibold text-gray-900 text-sm">
-                            ใช้โปรโมชันจากสำนักงานใหญ่
+                            ใช้รูปภาพจากสำนักงานใหญ่
                           </p>
                           <p className="text-xs text-gray-500">
                             หากเปิดใช้งาน
@@ -138,7 +186,7 @@ export function BannerManagerModal({
                       <Switch
                         checked={useAdminBanners}
                         onChange={onToggleAdminBanners}
-                        className={`group relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${useAdminBanners ? "bg-amber-500" : "bg-gray-300"}`}
+                        className={`group relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${useAdminBanners ? "bg-amber-500" : "bg-gray-300"}`}
                       >
                         <span
                           aria-hidden="true"
@@ -148,12 +196,12 @@ export function BannerManagerModal({
                     </div>
                   )}
 
-                  <div className="p-6 bg-gray-50 min-h-75">
+                  <div className="p-6 bg-gray-50 flex-1 overflow-y-auto">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {banners.map((banner) => (
                         <div
                           key={banner.id}
-                          className="group relative aspect-4/3 rounded-xl overflow-hidden bg-gray-200 shadow-sm border border-gray-200"
+                          className="group relative aspect-4/3 rounded-xl overflow-hidden bg-white shadow-sm border border-gray-200"
                         >
                           <img
                             src={banner.url}
@@ -161,11 +209,11 @@ export function BannerManagerModal({
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                           />
                           {!isReadOnly && (
-                            <div className="absolute inset-0 bg-linear-to-t from-gray-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
+                            <div className="absolute inset-0 bg-linear-to-t from-gray-950/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
                               <button
                                 onClick={() => setConfirmDeleteId(banner.id)}
                                 disabled={deletingId === banner.id}
-                                className="flex items-center justify-center gap-2 w-full bg-red-600/90 hover:bg-red-700 text-white py-1.5 rounded-lg text-sm font-semibold backdrop-blur-sm cursor-pointer"
+                                className="flex items-center justify-center gap-2 w-full bg-red-600/90 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-bold backdrop-blur-md cursor-pointer transition-colors"
                               >
                                 {deletingId === banner.id ? (
                                   <CircleNotch
@@ -173,49 +221,68 @@ export function BannerManagerModal({
                                     className="animate-spin"
                                   />
                                 ) : (
-                                  <Trash size={16} />
+                                  <Trash size={16} weight="bold" />
                                 )}{" "}
-                                ลบ
+                                ลบรูปนี้
                               </button>
                             </div>
                           )}
                         </div>
                       ))}
 
-                      {!isReadOnly && (
-                        <div
-                          onClick={() =>
-                            !isUploading && fileInputRef.current?.click()
-                          }
-                          className="aspect-4/3 rounded-xl border-2 border-dashed border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 flex flex-col items-center justify-center cursor-pointer transition-colors group"
-                        >
-                          <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleFileSelect}
-                            accept="image/*"
-                            className="hidden"
-                          />
-                          {isUploading ? (
-                            <div className="flex flex-col items-center">
-                              <CircleNotch
-                                size={24}
-                                className="animate-spin mb-2"
-                              />
-                              <span className="text-xs font-medium">
-                                อัปโหลด...
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center text-gray-400 group-hover:text-gray-600">
-                              <Plus size={24} className="mb-2" />
-                              <span className="text-xs font-semibold">
-                                เพิ่มรูปใหม่
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      {!isReadOnly &&
+                        (isAtLimit ? (
+                          <div className="aspect-4/3 rounded-xl border-2 border-dashed border-red-200 bg-red-50/50 flex flex-col items-center justify-center opacity-80 select-none">
+                            <Warning
+                              size={28}
+                              className="mb-2 text-red-400"
+                              weight="fill"
+                            />
+                            <span className="text-sm font-bold text-red-800">
+                              อัพโหลดรูปครบจำนวนแล้ว
+                            </span>
+                            <span className="text-xs font-medium text-red-600 mt-1">
+                              ลบรูปเดิมเพื่อเพิ่มใหม่
+                            </span>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() =>
+                              !isUploading && fileInputRef.current?.click()
+                            }
+                            className="aspect-4/3 rounded-xl border-2 border-dashed border-gray-300 hover:border-gray-900 bg-white hover:bg-gray-50 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 group"
+                          >
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              onChange={handleFileSelect}
+                              accept="image/*"
+                              className="hidden"
+                            />
+                            {isUploading ? (
+                              <div className="flex flex-col items-center text-gray-600">
+                                <CircleNotch
+                                  size={28}
+                                  className="animate-spin mb-2"
+                                />
+                                <span className="text-sm font-bold">
+                                  กำลังอัปโหลด...
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center text-gray-400 group-hover:text-gray-900 transition-colors">
+                                <Plus
+                                  size={28}
+                                  weight="bold"
+                                  className="mb-2"
+                                />
+                                <span className="text-sm font-bold">
+                                  เพิ่มรูปภาพใหม่
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
                     </div>
                   </div>
                 </DialogPanel>
@@ -239,7 +306,7 @@ export function BannerManagerModal({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <DialogBackdrop className="fixed inset-0 bg-gray-950/50 backdrop-blur-sm transition-opacity" />
+            <DialogBackdrop className="fixed inset-0 bg-gray-950/60 backdrop-blur-sm transition-opacity" />
           </TransitionChild>
 
           <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -252,9 +319,9 @@ export function BannerManagerModal({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <DialogPanel className="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-sm p-6">
+                <DialogPanel className="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-sm p-8">
                   <div className="flex flex-col items-center text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 mb-4 border border-red-100">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 mb-5 border border-red-100">
                       <Warning
                         size={32}
                         weight="fill"
@@ -267,11 +334,21 @@ export function BannerManagerModal({
                     >
                       ยืนยันการลบรูปภาพ?
                     </DialogTitle>
+                    <p className="text-sm text-gray-500 mt-2">
+                      รูปภาพนี้จะถูกลบออกจากระบบอย่างถาวร
+                    </p>
                   </div>
-                  <div className="mt-6 flex flex-col gap-2">
+                  <div className="mt-8 flex gap-3">
                     <button
                       type="button"
-                      className="inline-flex w-full justify-center rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-red-700 cursor-pointer"
+                      className="flex-1 justify-center rounded-xl bg-gray-100 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors"
+                      onClick={() => setConfirmDeleteId(null)}
+                    >
+                      ยกเลิก
+                    </button>
+                    <button
+                      type="button"
+                      className="flex-1 justify-center rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-red-700 cursor-pointer transition-colors"
                       onClick={async () => {
                         if (!confirmDeleteId) return;
                         const id = confirmDeleteId;
@@ -284,14 +361,7 @@ export function BannerManagerModal({
                         }
                       }}
                     >
-                      ยืนยันการลบ
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex w-full justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => setConfirmDeleteId(null)}
-                    >
-                      ยกเลิก
+                      ลบทิ้ง
                     </button>
                   </div>
                 </DialogPanel>
