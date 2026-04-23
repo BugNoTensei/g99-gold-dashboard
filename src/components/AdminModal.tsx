@@ -195,6 +195,13 @@ export default function AdminModal({
       onShowToast("กรุณาระบุราคาทองคำแท่งให้ครบถ้วน", "error");
       return;
     }
+    if (saveMode === "admin" && !forceUpdate) {
+      onShowToast(
+        "กรุณาติ๊กเลือก 'บังคับซิงค์ข้อมูลไปยังทุกสาขา' เพื่อยืนยันการอัปเดต",
+        "error",
+      );
+      return;
+    }
     setShowConfirm(true);
   };
 
