@@ -45,32 +45,37 @@ export function useGoldPrice(
   const prices = localPrices || centralPrices;
   const isUsingLocal = localPrices !== null;
 
-  const fetchPrice = useCallback(async () => {
-    try {
-      const data = await getGoldPrices();
-      if (!data || !data.barBuy || data.barBuy <= 0) return;
+  const fetchPrice = useCallback(
+    async (force: boolean = false) => {
+      try {
+        const data = await getGoldPrices();
+        if (!data || !data.barBuy || data.barBuy <= 0) return;
 
-      const dataWithTime = data as GoldPricesWithTime;
-      const currentKey =
-        dataWithTime.priceAt ||
-        dataWithTime.update_time ||
-        `${data.barBuy}-${data.barSale}-${data.ornaReturn}`;
+        if (!isAutoFetch && !isUsingLocal && !force) return;
 
-      if (
-        lastUpdateKey.current !== "" &&
-        lastUpdateKey.current !== currentKey
-      ) {
-        if (!isUsingLocal && onPriceUpdatedRef.current) {
-          onPriceUpdatedRef.current();
+        const dataWithTime = data as GoldPricesWithTime;
+        const currentKey =
+          dataWithTime.priceAt ||
+          dataWithTime.update_time ||
+          `${data.barBuy}-${data.barSale}-${data.ornaReturn}`;
+
+        if (
+          lastUpdateKey.current !== "" &&
+          lastUpdateKey.current !== currentKey
+        ) {
+          if (onPriceUpdatedRef.current) {
+            onPriceUpdatedRef.current();
+          }
         }
-      }
 
-      lastUpdateKey.current = currentKey;
-      setCentralPrices(data);
-    } catch (error) {
-      console.error(error);
-    }
-  }, [isUsingLocal]);
+        lastUpdateKey.current = currentKey;
+        setCentralPrices(data);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [isAutoFetch, isUsingLocal],
+  );
 
   const saveBranchPrice = (payload: GoldPrices) => {
     setLocalPrices(payload);
@@ -105,15 +110,15 @@ export function useGoldPrice(
       });
     }
 
-    fetchPrice();
+    fetchPrice(true);
   };
 
   const clearLocalPrice = () => {
     setLocalPrices(null);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
-    setIsAutoFetch(true);
     if (onPriceUpdatedRef.current) onPriceUpdatedRef.current();
   };
+
   useEffect(() => {
     if (!isSystemReady) return;
 
@@ -136,7 +141,9 @@ export function useGoldPrice(
           { event: "*", schema: "public", table: "gold_prices" },
           (payload) => {
             if (payload.eventType === "DELETE") return;
+
             if (!isAutoFetch) return;
+
             if (realtimeTimeout.current)
               window.clearTimeout(realtimeTimeout.current);
             realtimeTimeout.current = window.setTimeout(() => {
@@ -146,7 +153,7 @@ export function useGoldPrice(
         )
         .on("broadcast", { event: "force_clear_local" }, () => {
           clearLocalPrice();
-          fetchPrice();
+          fetchPrice(true);
         })
         .subscribe();
 
