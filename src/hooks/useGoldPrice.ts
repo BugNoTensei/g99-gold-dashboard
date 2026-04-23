@@ -111,9 +111,9 @@ export function useGoldPrice(
   const clearLocalPrice = () => {
     setLocalPrices(null);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
+    setIsAutoFetch(true);
     if (onPriceUpdatedRef.current) onPriceUpdatedRef.current();
   };
-
   useEffect(() => {
     if (!isSystemReady) return;
 
@@ -136,6 +136,7 @@ export function useGoldPrice(
           { event: "*", schema: "public", table: "gold_prices" },
           (payload) => {
             if (payload.eventType === "DELETE") return;
+            if (!isAutoFetch) return;
             if (realtimeTimeout.current)
               window.clearTimeout(realtimeTimeout.current);
             realtimeTimeout.current = window.setTimeout(() => {
