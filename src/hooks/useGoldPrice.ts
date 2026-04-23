@@ -153,6 +153,7 @@ export function useGoldPrice(
         )
         .on("broadcast", { event: "force_clear_local" }, () => {
           clearLocalPrice();
+          setIsAutoFetch(true);
           fetchPrice(true);
         })
         .subscribe();
