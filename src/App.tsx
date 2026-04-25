@@ -140,7 +140,7 @@ export default function App() {
     saveBranchPrice,
     saveAdminPrice,
     clearLocalPrice,
-  } = useGoldPrice(isSystemReady, handlePriceChange);
+  } = useGoldPrice(isSystemReady, branchConfig?.id || "", handlePriceChange);
 
   const initSystem = () => {
     if (document.documentElement.requestFullscreen) {
