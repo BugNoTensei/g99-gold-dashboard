@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   getGoldPrices,
   updateGoldPrices,
@@ -6,14 +6,16 @@ import {
 } from "../services/api";
 import { supabase } from "../config/supabase";
 
-const LOCAL_STORAGE_KEY = "g99_local_branch_price";
-
 type GoldPricesWithTime = GoldPrices & { update_time?: string };
 
 export function useGoldPrice(
   isSystemReady: boolean,
+  branchId: string,
   onPriceUpdated?: () => void,
 ) {
+  const LOCAL_STORAGE_KEY = `g99_local_price_${branchId}`;
+  const AUTO_FETCH_KEY = `g99_auto_fetch_${branchId}`;
+
   const [centralPrices, setCentralPrices] = useState<GoldPrices>({
     barBuy: 0,
     barSale: 0,
@@ -21,12 +23,14 @@ export function useGoldPrice(
   });
 
   const [localPrices, setLocalPrices] = useState<GoldPrices | null>(() => {
+    if (!branchId) return null;
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
     return saved ? JSON.parse(saved) : null;
   });
 
   const [isAutoFetch, setIsAutoFetch] = useState<boolean>(() => {
-    const saved = localStorage.getItem("autoFetchGold");
+    if (!branchId) return true;
+    const saved = localStorage.getItem(AUTO_FETCH_KEY);
     return saved !== null ? saved === "true" : true;
   });
 
@@ -39,8 +43,10 @@ export function useGoldPrice(
   }, [onPriceUpdated]);
 
   useEffect(() => {
-    localStorage.setItem("autoFetchGold", String(isAutoFetch));
-  }, [isAutoFetch]);
+    if (branchId) {
+      localStorage.setItem(AUTO_FETCH_KEY, String(isAutoFetch));
+    }
+  }, [isAutoFetch, branchId, AUTO_FETCH_KEY]);
 
   const prices = localPrices || centralPrices;
   const isUsingLocal = localPrices !== null;
@@ -79,7 +85,10 @@ export function useGoldPrice(
 
   const saveBranchPrice = (payload: GoldPrices) => {
     setLocalPrices(payload);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
+    if (branchId) {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
+    }
+    setIsAutoFetch(false);
     if (onPriceUpdatedRef.current) onPriceUpdatedRef.current();
   };
 
@@ -91,21 +100,18 @@ export function useGoldPrice(
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL;
-
-      if (!apiUrl) {
-        console.warn("API URL is not defined in environment variables");
+      if (apiUrl) {
+        await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            barSale: Number(payload.barSale),
+            barBuy: Number(payload.barBuy),
+          }),
+        });
       }
-
-      await fetch(apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          barSale: Number(payload.barSale),
-          barBuy: Number(payload.barBuy),
-        }),
-      });
     } catch (error) {
-      console.error("Failed to sync price to external API:", error);
+      console.error(error);
     }
 
     if (forceUpdateAll && supabase) {
@@ -119,12 +125,15 @@ export function useGoldPrice(
     fetchPrice(true);
   };
 
-  const clearLocalPrice = () => {
+  const clearLocalPrice = useCallback(() => {
     setLocalPrices(null);
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    if (branchId) {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    }
+    setIsAutoFetch(true);
     if (onPriceUpdatedRef.current) onPriceUpdatedRef.current();
-  };
-
+    fetchPrice(true);
+  }, [branchId, LOCAL_STORAGE_KEY, fetchPrice]);
   useEffect(() => {
     if (!isSystemReady) return;
 
@@ -147,7 +156,6 @@ export function useGoldPrice(
           { event: "*", schema: "public", table: "gold_prices" },
           (payload) => {
             if (payload.eventType === "DELETE") return;
-
             if (!isAutoFetch) return;
 
             if (realtimeTimeout.current)
@@ -159,8 +167,6 @@ export function useGoldPrice(
         )
         .on("broadcast", { event: "force_clear_local" }, () => {
           clearLocalPrice();
-          setIsAutoFetch(true);
-          fetchPrice(true);
         })
         .subscribe();
 
@@ -173,8 +179,7 @@ export function useGoldPrice(
     return () => {
       if (interval) window.clearInterval(interval);
     };
-  }, [isSystemReady, isAutoFetch, fetchPrice]);
-
+  }, [isSystemReady, isAutoFetch, fetchPrice, clearLocalPrice]);
   return {
     prices,
     fetchPrice,
