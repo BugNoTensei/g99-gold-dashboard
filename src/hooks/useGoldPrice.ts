@@ -90,7 +90,13 @@ export function useGoldPrice(
     await updateGoldPrices(payload);
 
     try {
-      await fetch("https://g99pawnpay.golden99.co.th/gold-price", {
+      const apiUrl = import.meta.env.VITE_API_URL;
+
+      if (!apiUrl) {
+        console.warn("API URL is not defined in environment variables");
+      }
+
+      await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -99,7 +105,7 @@ export function useGoldPrice(
         }),
       });
     } catch (error) {
-      console.error(error);
+      console.error("Failed to sync price to external API:", error);
     }
 
     if (forceUpdateAll && supabase) {

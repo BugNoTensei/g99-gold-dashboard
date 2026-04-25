@@ -505,14 +505,14 @@ export default function AdminModal({
                 </div>
 
                 {saveMode === "admin" && userRole === "admin" && (
-                  <div className="relative flex items-start pt-5 border-t border-gray-100">
+                  <div className="relative flex items-start pt-5 border-t border-red-100 bg-red-50/50 p-4 rounded-xl mt-4">
                     <div className="flex h-6 items-center">
                       <input
                         id="forceUpdate"
                         type="checkbox"
                         checked={forceUpdate}
                         onChange={() => setForceUpdate(!forceUpdate)}
-                        className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-600 cursor-pointer transition-colors"
+                        className="h-5 w-5 rounded border-red-300 text-red-600 focus:ring-red-600 cursor-pointer transition-all"
                       />
                     </div>
                     <div
@@ -521,12 +521,16 @@ export default function AdminModal({
                     >
                       <label
                         htmlFor="forceUpdate"
-                        className="font-semibold text-red-900 cursor-pointer"
+                        className="font-bold text-red-700 flex items-center gap-1 cursor-pointer"
                       >
-                        บังคับซิงค์ข้อมูลไปยังทุกสาขา (Force Global Sync)
+                        <WarningCircleIcon size={18} weight="fill" />
+                        อันตราย: บังคับอัปเดตราคาทุกสาขาทันที (Force Global
+                        Sync)
                       </label>
-                      <p className="text-gray-700">
-                        ข้อมูลนี้จะถูกบังคับใช้แทนที่ข้อมูลที่สาขาตั้งไว้ทั้งหมดในระบบทันที
+                      <p className="text-red-600 font-medium text-xs mt-1">
+                        คำเตือน: คำสั่งนี้จะทำการ "ล้างราคาทุกสาขา"
+                        ที่ตั้งไว้เองทั้งหมด
+                        และบังคับให้กลับมาใช้ราคากลางนี้ทันที!
                       </p>
                     </div>
                   </div>

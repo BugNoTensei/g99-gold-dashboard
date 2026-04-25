@@ -4,7 +4,11 @@ import {
   DialogTitle,
   DialogBackdrop,
 } from "@headlessui/react";
-import { WarningIcon, WarningCircleIcon } from "@phosphor-icons/react";
+import {
+  WarningIcon,
+  WarningCircleIcon,
+  InfoIcon,
+} from "@phosphor-icons/react";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -58,7 +62,6 @@ export default function ConfirmModal({
                   >
                     ยืนยันการบันทึกข้อมูล
                   </DialogTitle>
-
                   <div className="mt-4 rounded-lg bg-gray-50 p-4 border border-gray-100">
                     <div className="flex justify-between py-1 text-sm border-b border-gray-200 mb-2 pb-2">
                       <span className="text-gray-500 font-medium">
@@ -99,15 +102,46 @@ export default function ConfirmModal({
                       </span>
                     </div>
                   </div>
-
-                  {saveMode === "admin" && forceUpdate && (
-                    <p className="mt-3 text-sm font-semibold text-red-600 flex items-center justify-center sm:justify-start">
-                      <WarningCircleIcon
-                        size={16}
-                        weight="fill"
-                        className="mr-1.5 shrink-0"
-                      />
-                      คำสั่งนี้จะบังคับอัปเดตทุกสาขาทันที
+                  {saveMode === "admin" ? (
+                    forceUpdate ? (
+                      <div className="bg-red-50 border-red-200 p-3 rounded-lg flex items-start gap-3">
+                        <WarningCircleIcon
+                          size={24}
+                          weight="fill"
+                          className="text-red-600 flex-none"
+                        />
+                        <div>
+                          <p className="text-red-700 font-bold">
+                            ยืนยันการบังคับอัปเดตทุกสาขา!
+                          </p>
+                          <p className="text-red-600 text-xs">
+                            ราคานี้จะถูกดันไปทุกสาขาทันที
+                            แม้สาขาจะปิดการซิงค์อยู่ก็ตาม
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-amber-50 border-amber-200 p-3 rounded-lg flex items-start gap-3">
+                        <InfoIcon
+                          size={24}
+                          weight="fill"
+                          className="text-amber-600 flex-none"
+                        />
+                        <div>
+                          <p className="text-amber-700 font-bold">
+                            อัปเดตราคากลางปกติ
+                          </p>
+                          <p className="text-amber-600 text-xs">
+                            ราคาจะเปลี่ยนเฉพาะสาขาที่เปิด 'ซิงค์อัตโนมัติ'
+                            เท่านั้น สาขาที่ตั้งราคาแบบ Manual
+                            จะไม่มีการเปลี่ยนแปลง
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    <p className="text-gray-600 text-sm">
+                      ยืนยันการบันทึกราคาทองสำหรับสาขานี้เท่านั้น
                     </p>
                   )}
                 </div>
