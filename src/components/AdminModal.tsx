@@ -180,16 +180,26 @@ export default function AdminModal({
     field: "barBuy" | "barSale" | "ornaReturn",
     value: string,
   ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-      ...(field === "barBuy" ? { ornaReturn: "" } : {}),
-    }));
+    setFormData((prev) => {
+      const newData = { ...prev, [field]: value };
+
+      if (field === "barBuy") {
+        const buyPrice = Number(value);
+        if (buyPrice > 0) {
+          const calculatedOrna = Math.floor(buyPrice * 0.95);
+          newData.ornaReturn = String(calculatedOrna);
+        } else {
+          newData.ornaReturn = "";
+        }
+      }
+
+      return newData;
+    });
+
     if (userRole === "admin" && isAutoFetch) {
       onToggleAutoFetch(false);
     }
   };
-
   const handlePreSubmit = () => {
     if (!formData.barBuy || !formData.barSale) {
       onShowToast("กรุณาระบุราคาทองคำแท่งให้ครบถ้วน", "error");
