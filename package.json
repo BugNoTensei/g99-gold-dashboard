@@ -12,12 +12,12 @@
   "dependencies": {
     "@headlessui/react": "^2.2.10",
     "@phosphor-icons/react": "^2.1.10",
-    "@supabase/supabase-js": "^2.103.3",
-    "@tailwindcss/vite": "^4.2.2",
-    "axios": "^1.15.0",
+    "@supabase/supabase-js": "^2.104.1",
+    "@tailwindcss/vite": "^4.2.4",
+    "axios": "^1.15.2",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -30,7 +30,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.5.0",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.58.2",
-    "vite": "^8.0.8"
+    "typescript-eslint": "^8.59.0",
+    "vite": "^8.0.10"
   }
 }
