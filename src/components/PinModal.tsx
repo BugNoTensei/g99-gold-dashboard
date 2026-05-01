@@ -7,8 +7,7 @@ import {
   DialogBackdrop,
 } from "@headlessui/react";
 import { LockKeyIcon, CircleNotchIcon } from "@phosphor-icons/react";
-import { supabase } from "../config/supabase";
-import { verifyBranchPin } from "../services/api";
+import { verifyBranchPin, verifyLoginPin } from "../services/api";
 
 interface PinModalProps {
   isOpen: boolean;
@@ -41,23 +40,13 @@ export default function PinModal({
     e.preventDefault();
     if (!pin) return;
 
-    if (!supabase) {
-      setError("ไม่สามารถเชื่อมต่อฐานข้อมูลได้");
-      return;
-    }
-
     setIsLoading(true);
     setError("");
 
     try {
-      const { data: roleData, error: rpcError } = await supabase.rpc(
-        "verify_login_pin",
-        {
-          p_pin: pin,
-        },
-      );
+      const roleData = await verifyLoginPin(pin);
 
-      if (!rpcError && roleData === "admin") {
+      if (roleData === "admin") {
         onSuccess("admin");
         return;
       }

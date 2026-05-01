@@ -19,6 +19,11 @@ export interface Branch {
   is_configured: boolean;
 }
 
+export interface PromotionBanner {
+  id: string;
+  imageUrl: string;
+}
+
 export const getGoldPrices = async (): Promise<GoldPrices> => {
   const res = await axios.get(`${API_URL}?t=${new Date().getTime()}`);
   return res.data;
@@ -42,20 +47,24 @@ export const updateGoldPrices = async (payload: GoldPrices) => {
 
 export const getBranches = async (): Promise<Branch[]> => {
   if (!supabase) return [];
+
   const { data, error } = await supabase
     .from("branches")
     .select("*")
     .order("branch_name", { ascending: true });
+
   if (error) throw error;
   return data || [];
 };
 
 export const setupBranchInitial = async (branchId: string, pin: string) => {
   if (!supabase) return;
+
   const { error } = await supabase.rpc("setup_branch_secure", {
     p_branch_id: branchId,
     p_new_pin: pin,
   });
+
   if (error) throw error;
 };
 
@@ -122,12 +131,43 @@ export const deletePromotionBanner = async (
 
   if (dbError) throw dbError;
 
-  const fileName = imageUrl.split("/").pop();
+  const [urlWithoutQuery] = imageUrl.split("?");
+  const fileName = urlWithoutQuery.split("/").pop();
+
   if (fileName) {
     await supabase.storage
       .from("promotions")
       .remove([`${branchId}/${fileName}`]);
   }
+};
+
+export const getPromotionBanners = async (
+  branchId: string,
+): Promise<PromotionBanner[]> => {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("branch_promotions")
+    .select("id, image_url")
+    .eq("branch_id", branchId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return (data || []).map((item: { id: string; image_url: string }) => ({
+    id: String(item.id),
+    imageUrl: item.image_url,
+  }));
+};
+
+export const verifyLoginPin = async (pin: string): Promise<"admin" | null> => {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase.rpc("verify_login_pin", {
+    p_pin: pin,
+  });
+
+  if (error) throw error;
+  return data === "admin" ? "admin" : null;
 };
 
 export const verifyBranchPin = async (
@@ -196,6 +236,7 @@ export const deleteBranch = async (branchId: string, adminPin: string) => {
     throw error;
   }
 };
+
 export const checkBranchExists = async (branchId: string): Promise<boolean> => {
   if (!supabase || !branchId) return false;
 
@@ -207,4 +248,50 @@ export const checkBranchExists = async (branchId: string): Promise<boolean> => {
 
   if (error || !data) return false;
   return true;
+};
+
+export const broadcastForceClearLocal = async () => {
+  if (!supabase) return;
+
+  await supabase.channel("gold-price-updates").send({
+    type: "broadcast",
+    event: "force_clear_local",
+    payload: { message: "Admin forced update" },
+  });
+};
+
+export const subscribeToGoldPriceUpdates = (
+  onDataUpdate: () => void,
+  onForceClearLocal: () => void,
+  autoFetch: boolean,
+) => {
+  const client = supabase;
+  if (!client) {
+    return {
+      unsubscribe: () => {},
+    };
+  }
+
+  const channel = client
+    .channel("gold-price-updates")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "gold_prices" },
+      (payload) => {
+        if (payload.eventType === "DELETE") return;
+        if (!autoFetch) return;
+        onDataUpdate();
+      },
+    )
+    .on("broadcast", { event: "force_clear_local" }, () => {
+      onForceClearLocal();
+    });
+
+  channel.subscribe();
+
+  return {
+    unsubscribe: () => {
+      client.removeChannel(channel);
+    },
+  };
 };

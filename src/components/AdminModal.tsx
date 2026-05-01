@@ -6,9 +6,12 @@ import {
   DialogBackdrop,
   Switch,
 } from "@headlessui/react";
-import { uploadPromotionBanner, deletePromotionBanner } from "../services/api";
+import {
+  getPromotionBanners,
+  uploadPromotionBanner,
+  deletePromotionBanner,
+} from "../services/api";
 import type { GoldPrices } from "../services/api";
-import { supabase } from "../config/supabase";
 import ConfirmModal from "./ConfirmModal";
 import { BannerManagerModal, type Banner } from "./BannerManagerModal";
 import { BranchManagerModal } from "./BranchManagerModal";
@@ -78,25 +81,18 @@ export default function AdminModal({
   });
 
   const fetchBanners = useCallback(async () => {
-    if (supabase) {
-      const targetBranch =
-        userRole === "admin" ? "main" : useAdminBanners ? "main" : branchId;
-      const { data, error } = await supabase
-        .from("branch_promotions")
-        .select("id, image_url")
-        .eq("branch_id", targetBranch)
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        setBanners(
-          data.map((b) => ({
-            id: b.id,
-            url: `${b.image_url}?t=${new Date().getTime()}`,
-          })),
-        );
-      } else {
-        setBanners([]);
-      }
+    const targetBranch =
+      userRole === "admin" ? "main" : useAdminBanners ? "main" : branchId;
+    try {
+      const banners = await getPromotionBanners(targetBranch);
+      setBanners(
+        banners.map((b) => ({
+          id: b.id,
+          url: `${b.imageUrl}?t=${new Date().getTime()}`,
+        })),
+      );
+    } catch {
+      setBanners([]);
     }
   }, [userRole, branchId, useAdminBanners]);
 
@@ -136,9 +132,6 @@ export default function AdminModal({
     }
   };
 
-  // -------------------------------------------------------------
-  // วิธีแก้ที่ 1: หุ้มฟังก์ชัน Fetch ด้วย async ภายใน useEffect
-  // -------------------------------------------------------------
   useEffect(() => {
     localStorage.setItem(
       `g99_use_admin_banners_${branchId}`,

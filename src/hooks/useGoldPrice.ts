@@ -2,9 +2,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   getGoldPrices,
   updateGoldPrices,
+  broadcastForceClearLocal,
+  subscribeToGoldPriceUpdates,
   type GoldPrices,
 } from "../services/api";
-import { supabase } from "../config/supabase";
 
 type GoldPricesWithTime = GoldPrices & { update_time?: string };
 
@@ -114,12 +115,8 @@ export function useGoldPrice(
       console.error(error);
     }
 
-    if (forceUpdateAll && supabase) {
-      await supabase.channel("gold-price-updates").send({
-        type: "broadcast",
-        event: "force_clear_local",
-        payload: { message: "Admin forced update" },
-      });
+    if (forceUpdateAll) {
+      await broadcastForceClearLocal();
     }
 
     fetchPrice(true);
@@ -148,36 +145,21 @@ export function useGoldPrice(
       interval = window.setInterval(fetchPrice, 300000);
     }
 
-    if (supabase) {
-      const channel = supabase
-        .channel("gold-price-updates")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "gold_prices" },
-          (payload) => {
-            if (payload.eventType === "DELETE") return;
-            if (!isAutoFetch) return;
-
-            if (realtimeTimeout.current)
-              window.clearTimeout(realtimeTimeout.current);
-            realtimeTimeout.current = window.setTimeout(() => {
-              fetchPrice();
-            }, 1000);
-          },
-        )
-        .on("broadcast", { event: "force_clear_local" }, () => {
-          clearLocalPrice();
-        })
-        .subscribe();
-
-      return () => {
-        if (interval) window.clearInterval(interval);
-        if (channel) supabase?.removeChannel(channel);
-      };
-    }
+    const subscription = subscribeToGoldPriceUpdates(
+      () => {
+        if (realtimeTimeout.current)
+          window.clearTimeout(realtimeTimeout.current);
+        realtimeTimeout.current = window.setTimeout(() => {
+          fetchPrice();
+        }, 1000);
+      },
+      clearLocalPrice,
+      isAutoFetch,
+    );
 
     return () => {
       if (interval) window.clearInterval(interval);
+      subscription.unsubscribe();
     };
   }, [isSystemReady, isAutoFetch, fetchPrice, clearLocalPrice]);
   return {

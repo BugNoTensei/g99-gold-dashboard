@@ -9,8 +9,7 @@ import PortraitTVLayout from "./components/PortraitTVLayout";
 import SetupScreen from "./components/SetupScreen";
 import { APP_CONFIG } from "./config";
 import { useGoldPrice } from "./hooks/useGoldPrice";
-import { supabase } from "./config/supabase";
-import { checkBranchExists } from "./services/api";
+import { checkBranchExists, getPromotionBanners } from "./services/api";
 import {
   CheckCircleIcon,
   WarningCircleIcon,
@@ -72,7 +71,7 @@ export default function App() {
 
   useEffect(() => {
     const fetchAds = async () => {
-      if (!isSystemReady || !supabase || !branchConfig) return;
+      if (!isSystemReady || !branchConfig) return;
 
       const storedValue = localStorage.getItem(
         `g99_use_admin_banners_${branchConfig.id}`,
@@ -80,19 +79,19 @@ export default function App() {
       const useAdmin = storedValue === null ? true : storedValue !== "false";
       const targetBranch = useAdmin ? "main" : branchConfig.id;
 
-      const { data } = await supabase
-        .from("branch_promotions")
-        .select("image_url")
-        .eq("branch_id", targetBranch)
-        .order("created_at", { ascending: false });
-
-      if (data && data.length > 0) {
-        setDisplayAds(
-          data.map((item) => `${item.image_url}?t=${new Date().getTime()}`),
-        );
-      } else {
+      try {
+        const banners = await getPromotionBanners(targetBranch);
+        if (banners.length > 0) {
+          setDisplayAds(
+            banners.map((item) => `${item.imageUrl}?t=${new Date().getTime()}`),
+          );
+        } else {
+          setDisplayAds([]);
+        }
+      } catch {
         setDisplayAds([]);
       }
+
       setIsAdsLoading(false);
     };
 

@@ -18,8 +18,8 @@ import {
   WarningIcon,
   MagnifyingGlassIcon,
 } from "@phosphor-icons/react";
-import { supabase } from "../config/supabase";
 import {
+  getBranches,
   addNewBranchByAdmin,
   resetBranchPin,
   deleteBranch,
@@ -55,16 +55,16 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchBranches = useCallback(async () => {
-    if (!supabase) return;
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("branches")
-        .select("id, branch_name, is_configured")
-        .order("branch_name", { ascending: true });
-
-      if (error) throw error;
-      if (data) setBranches(data);
+      const data = await getBranches();
+      setBranches(
+        data.map((branch) => ({
+          id: branch.id,
+          branch_name: branch.branch_name,
+          is_configured: branch.is_configured,
+        })),
+      );
     } catch {
       onShowToast("ไม่สามารถดึงข้อมูลสาขาได้", "error");
     } finally {

@@ -6,7 +6,7 @@ export const APP_CONFIG = {
     "/pictures/PNG3.jpg",
     "/pictures/PNG4.jpg",
   ],
-  SLIDER_INTERVAL_MS: 10000,
+  SLIDER_INTERVAL_MS: 5000,
 
   NOTIFICATION_SOUND_URL: "update.mp3",
   NOTIFICATION_PLAY_COUNT: 3,
