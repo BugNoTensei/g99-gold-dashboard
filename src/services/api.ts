@@ -25,7 +25,7 @@ export interface PromotionBanner {
 }
 
 export const getGoldPrices = async (): Promise<GoldPrices> => {
-  const res = await axios.get(`${API_URL}?t=${new Date().getTime()}`);
+  const res = await axios.get(API_URL);
   return res.data;
 };
 

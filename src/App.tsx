@@ -82,9 +82,7 @@ export default function App() {
       try {
         const banners = await getPromotionBanners(targetBranch);
         if (banners.length > 0) {
-          setDisplayAds(
-            banners.map((item) => `${item.imageUrl}?t=${new Date().getTime()}`),
-          );
+          setDisplayAds(banners.map((item) => item.imageUrl));
         } else {
           setDisplayAds([]);
         }

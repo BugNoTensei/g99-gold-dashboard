@@ -88,7 +88,7 @@ export default function AdminModal({
       setBanners(
         banners.map((b) => ({
           id: b.id,
-          url: `${b.imageUrl}?t=${new Date().getTime()}`,
+          url: b.imageUrl,
         })),
       );
     } catch {
