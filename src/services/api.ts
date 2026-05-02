@@ -17,6 +17,13 @@ export interface Branch {
   branch_name: string;
   branch_pin: string;
   is_configured: boolean;
+  role?: "branch" | "admin";
+}
+
+export interface BranchLoginResult {
+  id: string;
+  branch_name: string;
+  role: "branch" | "admin";
 }
 
 export interface PromotionBanner {
@@ -89,7 +96,7 @@ export const addNewBranchByAdmin = async (name: string, adminPin: string) => {
 
 export const uploadPromotionBanner = async (
   file: File,
-  branchId: string = "main",
+  branchId: string = "00000000-0000-0000-0000-000000000000",
 ) => {
   if (!supabase) throw new Error("Supabase is not initialized");
 
@@ -120,7 +127,7 @@ export const uploadPromotionBanner = async (
 export const deletePromotionBanner = async (
   id: string,
   imageUrl: string,
-  branchId: string = "main",
+  branchId: string = "00000000-0000-0000-0000-000000000000",
 ) => {
   if (!supabase) throw new Error("Supabase is not initialized");
 
@@ -294,4 +301,26 @@ export const subscribeToGoldPriceUpdates = (
       client.removeChannel(channel);
     },
   };
+};
+
+export const authenticateDevicePin = async (
+  branchId: string,
+  pin: string,
+): Promise<"branch" | "admin" | null> => {
+  if (!supabase) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from("branches")
+      .select("role")
+      .eq("id", branchId)
+      .eq("branch_pin", pin)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    return data.role as "branch" | "admin";
+  } catch {
+    return null;
+  }
 };

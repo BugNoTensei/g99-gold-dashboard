@@ -319,8 +319,8 @@ export default function App() {
 
       <PinModal
         isOpen={isPinModalOpen}
+        branchId={branchConfig.id}
         onClose={() => setIsPinModalOpen(false)}
-        branchId={branchConfig?.id || ""}
         onSuccess={(role) => {
           setUserRole(role);
           setIsPinModalOpen(false);

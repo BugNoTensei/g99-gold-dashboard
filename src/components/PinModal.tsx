@@ -7,19 +7,18 @@ import {
   DialogBackdrop,
 } from "@headlessui/react";
 import { LockKeyIcon, CircleNotchIcon } from "@phosphor-icons/react";
-import { verifyBranchPin, verifyLoginPin } from "../services/api";
-
+import { authenticateDevicePin } from "../services/api";
 interface PinModalProps {
   isOpen: boolean;
-  onClose: () => void;
   branchId: string;
+  onClose: () => void;
   onSuccess: (role: "branch" | "admin") => void;
 }
 
 export default function PinModal({
   isOpen,
-  onClose,
   branchId,
+  onClose,
   onSuccess,
 }: PinModalProps) {
   const [pin, setPin] = useState("");
@@ -44,33 +43,19 @@ export default function PinModal({
     setError("");
 
     try {
-      const roleData = await verifyLoginPin(pin);
-
-      if (roleData === "admin") {
-        onSuccess("admin");
-        return;
-      }
-
-      if (!branchId) {
-        setError("ไม่พบข้อมูลสาขา กรุณาตั้งค่าหน้าจอใหม่");
-        return;
-      }
-
-      const isValidBranch = await verifyBranchPin(branchId, pin);
-
-      if (isValidBranch) {
-        onSuccess("branch");
-      } else {
-        setError("รหัสผ่านไม่ถูกต้อง กรุณาลองอีกครั้ง");
+      const role = await authenticateDevicePin(branchId, pin);
+      if (!role) {
+        setError("รหัสผ่านไม่ถูกต้องสำหรับสาขานี้");
         setPin("");
+        return;
       }
+      onSuccess(role);
     } catch {
       setError("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
     } finally {
       setIsLoading(false);
     }
   };
-
   return (
     <Dialog
       open={isOpen}
@@ -99,7 +84,7 @@ export default function PinModal({
                 กรุณายืนยันตัวตน
               </DialogTitle>
               <p className="mt-2 text-sm text-gray-500">
-                ระบุรหัสผ่านเพื่อเข้าสู่หน้าตั้งค่าราคาและโฆษณา
+                ระบุรหัสผ่านเพื่อเข้าสู่ระบบ
               </p>
             </div>
 
