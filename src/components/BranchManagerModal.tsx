@@ -24,6 +24,7 @@ import {
   resetBranchPin,
   deleteBranch,
 } from "../services/api";
+import type { Branch } from "../types";
 
 export interface BranchInfo {
   id: string;
@@ -44,7 +45,7 @@ type PendingAction =
   | null;
 
 export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
-  const [branches, setBranches] = useState<BranchInfo[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
@@ -58,13 +59,7 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
     setIsLoading(true);
     try {
       const data = await getBranches();
-      setBranches(
-        data.map((branch) => ({
-          id: branch.id,
-          branch_name: branch.branch_name,
-          is_configured: branch.is_configured,
-        })),
-      );
+      setBranches(data);
     } catch {
       onShowToast("ไม่สามารถดึงข้อมูลสาขาได้", "error");
     } finally {

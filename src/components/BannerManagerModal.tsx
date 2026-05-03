@@ -19,6 +19,7 @@ import {
   LockKeyIcon,
 } from "@phosphor-icons/react";
 import { SYS_ROLES, UPLOAD_LIMITS } from "../config/constants";
+import type { UserRole } from "../types";
 
 export interface Banner {
   id: string;
@@ -32,7 +33,7 @@ interface Props {
   banners: Banner[];
   onUploadBanner: (file: File) => Promise<void>;
   onDeleteBanner: (id: string) => Promise<void>;
-  userRole: "admin" | "branch" | null;
+  userRole: UserRole | null;
   useAdminBanners: boolean;
   onToggleAdminBanners: (val: boolean) => void;
 }

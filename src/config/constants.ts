@@ -8,6 +8,8 @@ export const ADMIN_BRANCH_ID = "main";
 export const STORAGE_KEYS = {
   BRANCH_CONFIG: "g99_branch_config",
   USE_ADMIN_BANNERS: (branchId: string) => `g99_use_admin_banners_${branchId}`,
+  LOCAL_PRICE: (branchId: string) => `g99_local_price_${branchId}`,
+  AUTO_FETCH: (branchId: string) => `g99_auto_fetch_${branchId}`,
 };
 
 export const UPLOAD_LIMITS = {

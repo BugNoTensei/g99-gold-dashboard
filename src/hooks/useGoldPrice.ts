@@ -4,8 +4,9 @@ import {
   updateGoldPrices,
   broadcastForceClearLocal,
   subscribeToGoldPriceUpdates,
-  type GoldPrices,
 } from "../services/api";
+import type { GoldPrices } from "../types";
+import { STORAGE_KEYS } from "../config/constants";
 
 type GoldPricesWithTime = GoldPrices & { update_time?: string };
 
@@ -14,8 +15,8 @@ export function useGoldPrice(
   branchId: string,
   onPriceUpdated?: () => void,
 ) {
-  const LOCAL_STORAGE_KEY = `g99_local_price_${branchId}`;
-  const AUTO_FETCH_KEY = `g99_auto_fetch_${branchId}`;
+  const LOCAL_STORAGE_KEY = STORAGE_KEYS.LOCAL_PRICE(branchId);
+  const AUTO_FETCH_KEY = STORAGE_KEYS.AUTO_FETCH(branchId);
 
   const [centralPrices, setCentralPrices] = useState<GoldPrices>({
     barBuy: 0,

@@ -1,29 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
-import {
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-  DialogBackdrop,
-  Switch,
-} from "@headlessui/react";
-import {
-  getPromotionBanners,
-  uploadPromotionBanner,
-  deletePromotionBanner,
-} from "../services/api";
-import type { GoldPrices } from "../services/api";
-import { SYS_ROLES, ADMIN_BRANCH_ID, STORAGE_KEYS } from "../config/constants";
+import { useState, useEffect } from "react";
+import { Dialog, DialogPanel, DialogBackdrop } from "@headlessui/react";
+import { SYS_ROLES } from "../config/constants";
+import type { GoldPrices, UserRole } from "../types";
 import ConfirmModal from "./ConfirmModal";
-import { BannerManagerModal, type Banner } from "./BannerManagerModal";
+import { BannerManagerModal } from "./BannerManagerModal";
 import { BranchManagerModal } from "./BranchManagerModal";
-import {
-  FadersIcon,
-  XIcon,
-  WarningCircleIcon,
-  ArrowsClockwiseIcon,
-  ImagesIcon,
-  StorefrontIcon,
-} from "@phosphor-icons/react";
+import AdminModalHeader from "./AdminModalHeader";
+import AdminSettingsSection from "./AdminSettingsSection";
+import AdminPriceForm from "./AdminPriceForm";
+import { useBannerManagement } from "../hooks/useBannerManagement";
+import { usePriceForm } from "../hooks/usePriceForm";
+import { WarningCircleIcon } from "@phosphor-icons/react";
 
 interface Props {
   isOpen: boolean;
@@ -39,7 +26,7 @@ interface Props {
   ) => Promise<void>;
   clearLocalPrice: () => void;
   isUsingLocal: boolean;
-  userRole: "branch" | "admin" | null;
+  userRole: UserRole | null;
   fetchPrice: () => Promise<void>;
   branchId: string;
   branchName: string;
@@ -61,96 +48,35 @@ export default function AdminModal({
   branchId,
   branchName,
 }: Props) {
-  const [formData, setFormData] = useState({
-    barBuy: "",
-    barSale: "",
-    ornaReturn: "",
-  });
   const [isSaving, setIsSaving] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [saveMode, setSaveMode] = useState<"branch" | "admin">(
-    SYS_ROLES.BRANCH,
-  );
+  const [saveMode, setSaveMode] = useState<UserRole>(SYS_ROLES.BRANCH);
   const [forceUpdate, setForceUpdate] = useState(false);
 
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [isBranchManagerOpen, setIsBranchManagerOpen] = useState(false);
-  const [banners, setBanners] = useState<Banner[]>([]);
 
-  const [useAdminBanners, setUseAdminBanners] = useState(() => {
-    return (
-      localStorage.getItem(STORAGE_KEYS.USE_ADMIN_BANNERS(branchId)) !== "false"
-    );
+  const {
+    banners,
+    useAdminBanners,
+    setUseAdminBanners,
+    fetchBanners,
+    handleUploadBanner,
+    handleDeleteBanner,
+  } = useBannerManagement(userRole, branchId, onShowToast);
+
+  const { formData, handleInputChange, resetForm } = usePriceForm({
+    currentPrices,
+    userRole,
+    isAutoFetch,
+    onToggleAutoFetch,
   });
-
-  const fetchBanners = useCallback(async () => {
-    const targetBranch =
-      userRole === SYS_ROLES.ADMIN
-        ? ADMIN_BRANCH_ID
-        : useAdminBanners
-          ? ADMIN_BRANCH_ID
-          : branchId;
-    try {
-      const banners = await getPromotionBanners(targetBranch);
-      setBanners(
-        banners.map((b) => ({
-          id: b.id,
-          url: b.imageUrl,
-        })),
-      );
-    } catch {
-      setBanners([]);
-    }
-  }, [userRole, branchId, useAdminBanners]);
-
-  useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEYS.USE_ADMIN_BANNERS(branchId),
-      String(useAdminBanners),
-    );
-    const loadBanners = async () => {
-      await fetchBanners();
-    };
-    loadBanners();
-  }, [useAdminBanners, fetchBanners, branchId]);
-
-  const handleUploadBanner = async (file: File) => {
-    try {
-      const targetBranch =
-        userRole === SYS_ROLES.ADMIN ? ADMIN_BRANCH_ID : branchId;
-      await uploadPromotionBanner(file, targetBranch);
-      await fetchBanners();
-      onShowToast("เพิ่มรูปโฆษณาสำเร็จ", "success");
-    } catch {
-      onShowToast("อัปโหลดไม่สำเร็จ", "error");
-    }
-  };
-
-  const handleDeleteBanner = async (id: string) => {
-    try {
-      const bannerToDelete = banners.find((b) => b.id === id);
-      if (bannerToDelete) {
-        const targetBranch =
-          userRole === SYS_ROLES.ADMIN ? ADMIN_BRANCH_ID : branchId;
-        await deletePromotionBanner(id, bannerToDelete.url, targetBranch);
-        setBanners(banners.filter((b) => b.id !== id));
-        onShowToast("ลบรูปโฆษณาสำเร็จ", "success");
-      }
-    } catch {
-      onShowToast("ลบข้อมูลไม่สำเร็จ", "error");
-    }
-  };
 
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
   if (isOpen && !prevIsOpen) {
     setPrevIsOpen(true);
-    setFormData({
-      barBuy: currentPrices.barBuy > 0 ? String(currentPrices.barBuy) : "",
-      barSale: currentPrices.barSale > 0 ? String(currentPrices.barSale) : "",
-      ornaReturn:
-        currentPrices.ornaReturn > 0 ? String(currentPrices.ornaReturn) : "",
-    });
+    resetForm();
     if (userRole === SYS_ROLES.BRANCH) {
       setSaveMode(SYS_ROLES.BRANCH);
     }
@@ -158,39 +84,13 @@ export default function AdminModal({
   } else if (!isOpen && prevIsOpen) {
     setPrevIsOpen(false);
   }
+
   useEffect(() => {
     if (isOpen) {
-      const loadInitialBanners = async () => {
-        await fetchBanners();
-      };
-      loadInitialBanners();
+      fetchBanners();
     }
   }, [isOpen, fetchBanners]);
 
-  const handleInputChange = (
-    field: "barBuy" | "barSale" | "ornaReturn",
-    value: string,
-  ) => {
-    setFormData((prev) => {
-      const newData = { ...prev, [field]: value };
-
-      if (field === "barBuy") {
-        const buyPrice = Number(value);
-        if (buyPrice > 0) {
-          const calculatedOrna = Math.floor(buyPrice * 0.95);
-          newData.ornaReturn = String(calculatedOrna);
-        } else {
-          newData.ornaReturn = "";
-        }
-      }
-
-      return newData;
-    });
-
-    if (userRole === SYS_ROLES.ADMIN && isAutoFetch) {
-      onToggleAutoFetch(false);
-    }
-  };
   const handlePreSubmit = () => {
     if (!formData.barBuy || !formData.barSale) {
       onShowToast("กรุณาระบุราคาทองคำแท่งให้ครบถ้วน", "error");
@@ -242,268 +142,36 @@ export default function AdminModal({
               transition
               className="relative w-full max-w-lg transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-leave:duration-200 data-enter:ease-out data-leave:ease-in sm:my-8 data-closed:sm:translate-y-0 data-closed:sm:scale-95"
             >
-              <div className="border-b border-gray-100 bg-white px-6 py-5">
-                <div className="flex items-center justify-between gap-x-4">
-                  <div className="flex items-center gap-x-3">
-                    <div className="flex-none rounded-lg bg-red-50 p-2 border border-red-100">
-                      <FadersIcon
-                        size={24}
-                        weight="bold"
-                        className="text-red-600"
-                      />
-                    </div>
-                    <DialogTitle
-                      as="h2"
-                      className="text-xl font-bold leading-6 text-gray-950"
-                    >
-                      ระบบบริหารจัดการราคาทองคำ
-                    </DialogTitle>
-                  </div>
-                  <button
-                    onClick={onClose}
-                    className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
-                  >
-                    <XIcon size={24} weight="bold" />
-                  </button>
-                </div>
-              </div>
+              <AdminModalHeader onClose={onClose} />
 
               <div className="px-6 py-6 sm:p-6 space-y-4 bg-white">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100">
-                      <ImagesIcon
-                        size={20}
-                        className="text-gray-700"
-                        weight="fill"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-gray-900">
-                        จัดการป้ายโฆษณา
-                      </span>
-                      <span className="text-xs text-gray-600 mt-0.5">
-                        เพิ่ม/ลบ รูปภาพโฆษณา
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setIsBannerModalOpen(true)}
-                    className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-100 transition-colors cursor-pointer"
-                  >
-                    ตั้งค่ารูปภาพ
-                  </button>
-                </div>
+                <AdminSettingsSection
+                  userRole={userRole}
+                  isAutoFetch={isAutoFetch}
+                  onToggleAutoFetch={onToggleAutoFetch}
+                  isUsingLocal={isUsingLocal}
+                  clearLocalPrice={clearLocalPrice}
+                  onOpenBannerManager={() => setIsBannerModalOpen(true)}
+                  onOpenBranchManager={() => setIsBranchManagerOpen(true)}
+                  onRefreshPrice={async () => {
+                    try {
+                      await fetchPrice();
+                      onShowToast("ดึงราคาล่าสุดเรียบร้อย", "success");
+                    } catch {
+                      onShowToast("ดึงราคาไม่สำเร็จ กรุณาลองใหม่", "error");
+                    }
+                  }}
+                  isSaving={isSaving}
+                />
 
-                {userRole === SYS_ROLES.ADMIN && (
-                  <div className="flex items-center justify-between p-4 bg-amber-50 rounded-xl border border-amber-200 shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-white rounded-lg shadow-sm border border-amber-100">
-                        <StorefrontIcon
-                          size={20}
-                          className="text-amber-700"
-                          weight="fill"
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-amber-900">
-                          จัดการสาขา (Branches)
-                        </span>
-                        <span className="text-xs text-amber-700 mt-0.5">
-                          เพิ่มสาขาใหม่ในระบบ
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setIsBranchManagerOpen(true)}
-                      className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-amber-900 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-100 transition-colors cursor-pointer"
-                    >
-                      จัดการสาขา
-                    </button>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 shadow-sm transition-all mt-2">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-gray-900">
-                      การซิงค์ข้อมูลอัตโนมัติ
-                    </span>
-                    <span className="text-xs text-gray-600">
-                      {isAutoFetch
-                        ? "กำลังอัปเดตจากสมาคมค้าทองคำ"
-                        : "ปิดการซิงค์ (กำหนดราคาเอง)"}
-                    </span>
-                  </div>
-                  <Switch
-                    checked={isAutoFetch}
-                    onChange={onToggleAutoFetch}
-                    className={`group relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 ${isAutoFetch ? "bg-red-600" : "bg-gray-300"}`}
-                  >
-                    <span className="sr-only">เปิด/ปิด ดึงราคาอัตโนมัติ</span>
-                    <span
-                      aria-hidden="true"
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isAutoFetch ? "translate-x-5" : "translate-x-0"}`}
-                    />
-                  </Switch>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 shadow-sm">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-gray-900">
-                      ดึงข้อมูลล่าสุด
-                    </span>
-                  </div>
-                  <div className="relative group">
-                    <button
-                      type="button"
-                      disabled={!isAutoFetch || isUsingLocal || isSaving}
-                      onClick={async () => {
-                        try {
-                          await fetchPrice();
-                          onShowToast("ดึงราคาล่าสุดเรียบร้อย", "success");
-                        } catch {
-                          onShowToast("ดึงราคาไม่สำเร็จ กรุณาลองใหม่", "error");
-                        }
-                      }}
-                      className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer ${!isAutoFetch || isUsingLocal || isSaving ? "bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none" : "bg-gray-900 hover:bg-gray-800 text-white focus:ring-gray-900"}`}
-                    >
-                      <ArrowsClockwiseIcon
-                        size={16}
-                        weight="bold"
-                        className={isSaving ? "animate-spin" : ""}
-                      />
-                      <span>
-                        {!isAutoFetch || isUsingLocal
-                          ? "ปิดการซิงค์"
-                          : "ซิงค์ทันที"}
-                      </span>
-                    </button>
-                  </div>
-                </div>
-
-                {isUsingLocal && (
-                  <div className="rounded-xl bg-red-50 p-4 border border-red-200 shadow-inner">
-                    <div className="flex items-center justify-between gap-x-3">
-                      <div className="flex items-center">
-                        <WarningCircleIcon
-                          size={20}
-                          weight="fill"
-                          className="text-red-500 mr-2.5"
-                        />
-                        <span className="text-sm font-semibold text-red-900">
-                          แจ้งเตือน: สาขานี้กำลังใช้ "ราคากำหนดเอง"
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          clearLocalPrice();
-                          onClose();
-                          onShowToast(
-                            "คืนค่าสู่ราคากลางเรียบร้อยแล้ว",
-                            "success",
-                          );
-                        }}
-                        className="text-xs font-bold text-red-700 hover:text-red-900 hover:underline transition-colors cursor-pointer"
-                      >
-                        ล้างค่าและใช้ราคากลาง
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {userRole === SYS_ROLES.ADMIN ? (
-                  <div className="flex space-x-1.5 rounded-lg bg-gray-100 p-1 ring-1 ring-gray-200 mt-2">
-                    <button
-                      onClick={() => setSaveMode(SYS_ROLES.BRANCH)}
-                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 cursor-pointer ${saveMode === SYS_ROLES.BRANCH ? "bg-white text-gray-950 shadow ring-1 ring-gray-900/5" : "text-gray-600 hover:text-gray-800"}`}
-                    >
-                      ปรับราคาสาขา
-                    </button>
-                    <button
-                      onClick={() => setSaveMode(SYS_ROLES.ADMIN)}
-                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 cursor-pointer ${saveMode === SYS_ROLES.ADMIN ? "bg-white text-red-600 shadow ring-1 ring-red-900/5" : "text-gray-600 hover:text-red-700 hover:bg-white/50"}`}
-                    >
-                      ประกาศราคากลาง (Admin)
-                    </button>
-                  </div>
-                ) : (
-                  <div className="rounded-lg bg-gray-50 p-3 ring-1 ring-gray-200 text-center border-l-4 border-gray-900 mt-2">
-                    <span className="text-sm font-bold text-gray-800">
-                      โหมดตั้งค่า: ปรับราคาสาขาหน้าร้าน
-                    </span>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
-                  <div className="sm:col-span-1">
-                    <label className="block text-sm font-medium leading-6 text-gray-950">
-                      ราคารับซื้อ (ทองคำแท่ง)
-                    </label>
-                    <div className="relative mt-2 rounded-lg shadow-sm">
-                      <input
-                        type="number"
-                        disabled={isAutoFetch && userRole !== SYS_ROLES.ADMIN}
-                        value={formData.barBuy}
-                        onChange={(e) =>
-                          handleInputChange("barBuy", e.target.value)
-                        }
-                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isAutoFetch && userRole !== SYS_ROLES.ADMIN ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
-                        placeholder="0"
-                      />
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                        <span className="text-sm font-medium text-gray-700">
-                          บาท
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-1">
-                    <label className="block text-sm font-medium leading-6 text-gray-950">
-                      ราคาขายออก (ทองคำแท่ง)
-                    </label>
-                    <div className="relative mt-2 rounded-lg shadow-sm">
-                      <input
-                        type="number"
-                        disabled={isAutoFetch && userRole !== SYS_ROLES.ADMIN}
-                        value={formData.barSale}
-                        onChange={(e) =>
-                          handleInputChange("barSale", e.target.value)
-                        }
-                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isAutoFetch && userRole !== SYS_ROLES.ADMIN ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
-                        placeholder="0"
-                      />
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                        <span className="text-sm font-medium text-gray-700">
-                          บาท
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium leading-6 text-gray-950">
-                      ราคารับซื้อ (ทองรูปพรรณ)
-                    </label>
-                    <div className="relative mt-2 rounded-lg shadow-sm">
-                      <input
-                        type="number"
-                        disabled={isAutoFetch && userRole !== SYS_ROLES.ADMIN}
-                        value={formData.ornaReturn}
-                        onChange={(e) =>
-                          handleInputChange("ornaReturn", e.target.value)
-                        }
-                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isAutoFetch && userRole !== SYS_ROLES.ADMIN ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-gray-50 text-gray-950 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
-                        placeholder="ระบบจะคำนวณอัตโนมัติหากเว้นว่าง"
-                      />
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                        <span className="text-sm font-medium text-gray-700">
-                          บาท
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <AdminPriceForm
+                  userRole={userRole}
+                  saveMode={saveMode}
+                  setSaveMode={setSaveMode}
+                  formData={formData}
+                  handleInputChange={handleInputChange}
+                  isAutoFetch={isAutoFetch}
+                />
 
                 {saveMode === SYS_ROLES.ADMIN &&
                   userRole === SYS_ROLES.ADMIN && (
