@@ -18,6 +18,7 @@ import {
   ImagesSquareIcon,
   LockKeyIcon,
 } from "@phosphor-icons/react";
+import { SYS_ROLES, UPLOAD_LIMITS } from "../config/constants";
 
 export interface Banner {
   id: string;
@@ -36,8 +37,6 @@ interface Props {
   onToggleAdminBanners: (val: boolean) => void;
 }
 
-const MAX_BANNERS = 5;
-
 export function BannerManagerModal({
   isOpen,
   onClose,
@@ -54,10 +53,13 @@ export function BannerManagerModal({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isReadOnly = userRole === "branch" && useAdminBanners;
+  const isReadOnly = userRole === SYS_ROLES.BRANCH && useAdminBanners;
   const currentCount = banners.length;
-  const isAtLimit = currentCount >= MAX_BANNERS;
-  const progressPercentage = Math.min((currentCount / MAX_BANNERS) * 100, 100);
+  const isAtLimit = currentCount >= UPLOAD_LIMITS.MAX_BANNERS;
+  const progressPercentage = Math.min(
+    (currentCount / UPLOAD_LIMITS.MAX_BANNERS) * 100,
+    100,
+  );
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -143,7 +145,7 @@ export function BannerManagerModal({
                               จำนวนที่ยังสามารถอัปโหลดได้
                             </span>
                             <span className="text-xs text-gray-500">
-                              สามารถใส่ได้สูงสุด {MAX_BANNERS} รูป
+                              สามารถใส่ได้สูงสุด {UPLOAD_LIMITS.MAX_BANNERS} รูป
                             </span>
                           </div>
                         </div>
@@ -152,7 +154,7 @@ export function BannerManagerModal({
                           <span
                             className={`text-sm font-bold ${isAtLimit ? "text-red-600" : "text-gray-900"}`}
                           >
-                            {currentCount} / {MAX_BANNERS} รูป
+                            {currentCount} / {UPLOAD_LIMITS.MAX_BANNERS} รูป
                           </span>
                           <div className="w-full h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
                             <div
@@ -165,7 +167,7 @@ export function BannerManagerModal({
                     )}
                   </div>
 
-                  {userRole === "branch" && (
+                  {userRole === SYS_ROLES.BRANCH && (
                     <div className="bg-amber-50/50 px-6 py-4 border-b border-amber-100 flex items-center justify-between shrink-0">
                       <div className="flex items-center gap-3">
                         <BuildingsIcon

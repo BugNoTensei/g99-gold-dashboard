@@ -10,6 +10,7 @@ import SetupScreen from "./components/SetupScreen";
 import { APP_CONFIG } from "./config";
 import { useGoldPrice } from "./hooks/useGoldPrice";
 import { checkBranchExists, getPromotionBanners } from "./services/api";
+import { SYS_ROLES, ADMIN_BRANCH_ID, STORAGE_KEYS } from "./config/constants";
 import {
   CheckCircleIcon,
   WarningCircleIcon,
@@ -23,7 +24,7 @@ export default function App() {
     id: string;
     name: string;
   } | null>(() => {
-    const saved = localStorage.getItem("g99_branch_config");
+    const saved = localStorage.getItem(STORAGE_KEYS.BRANCH_CONFIG);
     return saved ? JSON.parse(saved) : null;
   });
 
@@ -38,7 +39,7 @@ export default function App() {
   const [userRole, setUserRole] = useState<"branch" | "admin" | null>(null);
   const [displayAds, setDisplayAds] = useState<string[]>([]);
   const [isAdsLoading, setIsAdsLoading] = useState(true);
-
+  const [adsRefreshKey, setAdsRefreshKey] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playCountRef = useRef<number>(1);
 
@@ -52,13 +53,12 @@ export default function App() {
     },
     [],
   );
-
   useEffect(() => {
     const validateSession = async () => {
       if (branchConfig?.id) {
         const exists = await checkBranchExists(branchConfig.id);
         if (!exists) {
-          localStorage.removeItem("g99_branch_config");
+          localStorage.removeItem(STORAGE_KEYS.BRANCH_CONFIG);
           showToast("สาขานี้ถูกลบออกจากระบบแล้ว", "error");
           setTimeout(() => {
             window.location.reload();
@@ -68,34 +68,41 @@ export default function App() {
     };
     validateSession();
   }, [branchConfig?.id, showToast]);
-
   useEffect(() => {
+    let isMounted = true;
+
     const fetchAds = async () => {
       if (!isSystemReady || !branchConfig) return;
 
       const storedValue = localStorage.getItem(
-        `g99_use_admin_banners_${branchConfig.id}`,
+        STORAGE_KEYS.USE_ADMIN_BANNERS(branchConfig.id),
       );
       const useAdmin = storedValue === null ? true : storedValue !== "false";
-      const targetBranch = useAdmin ? "main" : branchConfig.id;
+      const targetBranch = useAdmin ? ADMIN_BRANCH_ID : branchConfig.id;
 
       try {
         const banners = await getPromotionBanners(targetBranch);
+
+        if (!isMounted) return;
+
         if (banners.length > 0) {
           setDisplayAds(banners.map((item) => item.imageUrl));
         } else {
           setDisplayAds([]);
         }
       } catch {
-        setDisplayAds([]);
+        if (isMounted) setDisplayAds([]);
+      } finally {
+        if (isMounted) setIsAdsLoading(false);
       }
-
-      setIsAdsLoading(false);
     };
 
     fetchAds();
-  }, [isSystemReady, isModalOpen, branchConfig]);
 
+    return () => {
+      isMounted = false;
+    };
+  }, [isSystemReady, branchConfig, adsRefreshKey]);
   useEffect(() => {
     if (typeof window !== "undefined" && APP_CONFIG.NOTIFICATION_SOUND_URL) {
       const audio = new Audio(APP_CONFIG.NOTIFICATION_SOUND_URL);
@@ -191,10 +198,10 @@ export default function App() {
         <div className="absolute top-4 left-4 z-50 flex items-center gap-3 bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg transition-all">
           <div className="flex items-center gap-2">
             <div
-              className={`w-2.5 h-2.5 rounded-full animate-pulse ${userRole === "admin" ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" : "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)]"}`}
+              className={`w-2.5 h-2.5 rounded-full animate-pulse ${userRole === SYS_ROLES.ADMIN ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" : "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)]"}`}
             />
             <span className="text-white text-xs md:text-sm font-medium tracking-wide">
-              {userRole === "admin"
+              {userRole === SYS_ROLES.ADMIN
                 ? "Admin Mode"
                 : `สาขา-${branchConfig.name}`}
             </span>
@@ -329,7 +336,11 @@ export default function App() {
       />
       <AdminModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsAdsLoading(true);
+          setIsModalOpen(false);
+          setAdsRefreshKey((prev) => prev + 1);
+        }}
         currentPrices={prices}
         onShowToast={showToast}
         isAutoFetch={isAutoFetch}

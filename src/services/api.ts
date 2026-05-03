@@ -1,5 +1,6 @@
 import axios from "axios";
 import { supabase } from "../config/supabase";
+import { ADMIN_BRANCH_ID } from "../config/constants";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const PIN = import.meta.env.VITE_UPDATE_PIN;
@@ -96,7 +97,7 @@ export const addNewBranchByAdmin = async (name: string, adminPin: string) => {
 
 export const uploadPromotionBanner = async (
   file: File,
-  branchId: string = "00000000-0000-0000-0000-000000000000",
+  branchId: string = "main",
 ) => {
   if (!supabase) throw new Error("Supabase is not initialized");
 
@@ -127,7 +128,7 @@ export const uploadPromotionBanner = async (
 export const deletePromotionBanner = async (
   id: string,
   imageUrl: string,
-  branchId: string = "00000000-0000-0000-0000-000000000000",
+  branchId: string = "main",
 ) => {
   if (!supabase) throw new Error("Supabase is not initialized");
 

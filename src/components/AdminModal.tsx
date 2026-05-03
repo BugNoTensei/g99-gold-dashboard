@@ -12,6 +12,7 @@ import {
   deletePromotionBanner,
 } from "../services/api";
 import type { GoldPrices } from "../services/api";
+import { SYS_ROLES, ADMIN_BRANCH_ID, STORAGE_KEYS } from "../config/constants";
 import ConfirmModal from "./ConfirmModal";
 import { BannerManagerModal, type Banner } from "./BannerManagerModal";
 import { BranchManagerModal } from "./BranchManagerModal";
@@ -67,7 +68,9 @@ export default function AdminModal({
   });
   const [isSaving, setIsSaving] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [saveMode, setSaveMode] = useState<"branch" | "admin">("branch");
+  const [saveMode, setSaveMode] = useState<"branch" | "admin">(
+    SYS_ROLES.BRANCH,
+  );
   const [forceUpdate, setForceUpdate] = useState(false);
 
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
@@ -76,13 +79,17 @@ export default function AdminModal({
 
   const [useAdminBanners, setUseAdminBanners] = useState(() => {
     return (
-      localStorage.getItem(`g99_use_admin_banners_${branchId}`) !== "false"
+      localStorage.getItem(STORAGE_KEYS.USE_ADMIN_BANNERS(branchId)) !== "false"
     );
   });
 
   const fetchBanners = useCallback(async () => {
     const targetBranch =
-      userRole === "admin" ? "main" : useAdminBanners ? "main" : branchId;
+      userRole === SYS_ROLES.ADMIN
+        ? ADMIN_BRANCH_ID
+        : useAdminBanners
+          ? ADMIN_BRANCH_ID
+          : branchId;
     try {
       const banners = await getPromotionBanners(targetBranch);
       setBanners(
@@ -98,7 +105,7 @@ export default function AdminModal({
 
   useEffect(() => {
     localStorage.setItem(
-      `g99_use_admin_banners_${branchId}`,
+      STORAGE_KEYS.USE_ADMIN_BANNERS(branchId),
       String(useAdminBanners),
     );
     const loadBanners = async () => {
@@ -109,7 +116,8 @@ export default function AdminModal({
 
   const handleUploadBanner = async (file: File) => {
     try {
-      const targetBranch = userRole === "admin" ? "main" : branchId;
+      const targetBranch =
+        userRole === SYS_ROLES.ADMIN ? ADMIN_BRANCH_ID : branchId;
       await uploadPromotionBanner(file, targetBranch);
       await fetchBanners();
       onShowToast("เพิ่มรูปโฆษณาสำเร็จ", "success");
@@ -122,7 +130,8 @@ export default function AdminModal({
     try {
       const bannerToDelete = banners.find((b) => b.id === id);
       if (bannerToDelete) {
-        const targetBranch = userRole === "admin" ? "main" : branchId;
+        const targetBranch =
+          userRole === SYS_ROLES.ADMIN ? ADMIN_BRANCH_ID : branchId;
         await deletePromotionBanner(id, bannerToDelete.url, targetBranch);
         setBanners(banners.filter((b) => b.id !== id));
         onShowToast("ลบรูปโฆษณาสำเร็จ", "success");
@@ -131,17 +140,6 @@ export default function AdminModal({
       onShowToast("ลบข้อมูลไม่สำเร็จ", "error");
     }
   };
-
-  useEffect(() => {
-    localStorage.setItem(
-      `g99_use_admin_banners_${branchId}`,
-      String(useAdminBanners),
-    );
-    const loadBanners = async () => {
-      await fetchBanners();
-    };
-    loadBanners();
-  }, [useAdminBanners, fetchBanners, branchId]);
 
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
@@ -153,8 +151,8 @@ export default function AdminModal({
       ornaReturn:
         currentPrices.ornaReturn > 0 ? String(currentPrices.ornaReturn) : "",
     });
-    if (userRole === "branch") {
-      setSaveMode("branch");
+    if (userRole === SYS_ROLES.BRANCH) {
+      setSaveMode(SYS_ROLES.BRANCH);
     }
     setShowConfirm(false);
   } else if (!isOpen && prevIsOpen) {
@@ -189,7 +187,7 @@ export default function AdminModal({
       return newData;
     });
 
-    if (userRole === "admin" && isAutoFetch) {
+    if (userRole === SYS_ROLES.ADMIN && isAutoFetch) {
       onToggleAutoFetch(false);
     }
   };
@@ -212,7 +210,7 @@ export default function AdminModal({
     };
 
     try {
-      if (saveMode === "branch") {
+      if (saveMode === SYS_ROLES.BRANCH) {
         saveBranchPrice(payload);
         onShowToast("บันทึกข้อมูลระดับสาขาเรียบร้อยแล้ว", "success");
       } else {
@@ -228,7 +226,7 @@ export default function AdminModal({
     }
   };
 
-  const isSubmitDisabled = isAutoFetch && userRole !== "admin";
+  const isSubmitDisabled = isAutoFetch && userRole !== SYS_ROLES.ADMIN;
 
   return (
     <>
@@ -297,7 +295,7 @@ export default function AdminModal({
                   </button>
                 </div>
 
-                {userRole === "admin" && (
+                {userRole === SYS_ROLES.ADMIN && (
                   <div className="flex items-center justify-between p-4 bg-amber-50 rounded-xl border border-amber-200 shadow-sm">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-white rounded-lg shadow-sm border border-amber-100">
@@ -413,17 +411,17 @@ export default function AdminModal({
                   </div>
                 )}
 
-                {userRole === "admin" ? (
+                {userRole === SYS_ROLES.ADMIN ? (
                   <div className="flex space-x-1.5 rounded-lg bg-gray-100 p-1 ring-1 ring-gray-200 mt-2">
                     <button
-                      onClick={() => setSaveMode("branch")}
-                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 cursor-pointer ${saveMode === "branch" ? "bg-white text-gray-950 shadow ring-1 ring-gray-900/5" : "text-gray-600 hover:text-gray-800"}`}
+                      onClick={() => setSaveMode(SYS_ROLES.BRANCH)}
+                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 cursor-pointer ${saveMode === SYS_ROLES.BRANCH ? "bg-white text-gray-950 shadow ring-1 ring-gray-900/5" : "text-gray-600 hover:text-gray-800"}`}
                     >
                       ปรับราคาสาขา
                     </button>
                     <button
-                      onClick={() => setSaveMode("admin")}
-                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 cursor-pointer ${saveMode === "admin" ? "bg-white text-red-600 shadow ring-1 ring-red-900/5" : "text-gray-600 hover:text-red-700 hover:bg-white/50"}`}
+                      onClick={() => setSaveMode(SYS_ROLES.ADMIN)}
+                      className={`flex-1 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 cursor-pointer ${saveMode === SYS_ROLES.ADMIN ? "bg-white text-red-600 shadow ring-1 ring-red-900/5" : "text-gray-600 hover:text-red-700 hover:bg-white/50"}`}
                     >
                       ประกาศราคากลาง (Admin)
                     </button>
@@ -444,12 +442,12 @@ export default function AdminModal({
                     <div className="relative mt-2 rounded-lg shadow-sm">
                       <input
                         type="number"
-                        disabled={isAutoFetch && userRole !== "admin"}
+                        disabled={isAutoFetch && userRole !== SYS_ROLES.ADMIN}
                         value={formData.barBuy}
                         onChange={(e) =>
                           handleInputChange("barBuy", e.target.value)
                         }
-                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isAutoFetch && userRole !== "admin" ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
+                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isAutoFetch && userRole !== SYS_ROLES.ADMIN ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
                         placeholder="0"
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
@@ -467,12 +465,12 @@ export default function AdminModal({
                     <div className="relative mt-2 rounded-lg shadow-sm">
                       <input
                         type="number"
-                        disabled={isAutoFetch && userRole !== "admin"}
+                        disabled={isAutoFetch && userRole !== SYS_ROLES.ADMIN}
                         value={formData.barSale}
                         onChange={(e) =>
                           handleInputChange("barSale", e.target.value)
                         }
-                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isAutoFetch && userRole !== "admin" ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
+                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isAutoFetch && userRole !== SYS_ROLES.ADMIN ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-white text-gray-950 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
                         placeholder="0"
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
@@ -490,12 +488,12 @@ export default function AdminModal({
                     <div className="relative mt-2 rounded-lg shadow-sm">
                       <input
                         type="number"
-                        disabled={isAutoFetch && userRole !== "admin"}
+                        disabled={isAutoFetch && userRole !== SYS_ROLES.ADMIN}
                         value={formData.ornaReturn}
                         onChange={(e) =>
                           handleInputChange("ornaReturn", e.target.value)
                         }
-                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isAutoFetch && userRole !== "admin" ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-gray-50 text-gray-950 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
+                        className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isAutoFetch && userRole !== SYS_ROLES.ADMIN ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-gray-50 text-gray-950 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
                         placeholder="ระบบจะคำนวณอัตโนมัติหากเว้นว่าง"
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
@@ -507,37 +505,38 @@ export default function AdminModal({
                   </div>
                 </div>
 
-                {saveMode === "admin" && userRole === "admin" && (
-                  <div className="relative flex items-start pt-5 border-t border-red-100 bg-red-50/50 p-4 rounded-xl mt-4">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id="forceUpdate"
-                        type="checkbox"
-                        checked={forceUpdate}
-                        onChange={() => setForceUpdate(!forceUpdate)}
-                        className="h-5 w-5 rounded border-red-300 text-red-600 focus:ring-red-600 cursor-pointer transition-all"
-                      />
-                    </div>
-                    <div
-                      className="ml-3 text-sm leading-6 cursor-pointer"
-                      onClick={() => setForceUpdate(!forceUpdate)}
-                    >
-                      <label
-                        htmlFor="forceUpdate"
-                        className="font-bold text-red-700 flex items-center gap-1 cursor-pointer"
+                {saveMode === SYS_ROLES.ADMIN &&
+                  userRole === SYS_ROLES.ADMIN && (
+                    <div className="relative flex items-start pt-5 border-t border-red-100 bg-red-50/50 p-4 rounded-xl mt-4">
+                      <div className="flex h-6 items-center">
+                        <input
+                          id="forceUpdate"
+                          type="checkbox"
+                          checked={forceUpdate}
+                          onChange={() => setForceUpdate(!forceUpdate)}
+                          className="h-5 w-5 rounded border-red-300 text-red-600 focus:ring-red-600 cursor-pointer transition-all"
+                        />
+                      </div>
+                      <div
+                        className="ml-3 text-sm leading-6 cursor-pointer"
+                        onClick={() => setForceUpdate(!forceUpdate)}
                       >
-                        <WarningCircleIcon size={18} weight="fill" />
-                        อันตราย: บังคับอัปเดตราคาทุกสาขาทันที (Force Global
-                        Sync)
-                      </label>
-                      <p className="text-red-600 font-medium text-xs mt-1">
-                        คำเตือน: คำสั่งนี้จะทำการ "ล้างราคาทุกสาขา"
-                        ที่ตั้งไว้เองทั้งหมด
-                        และบังคับให้กลับมาใช้ราคากลางนี้ทันที!
-                      </p>
+                        <label
+                          htmlFor="forceUpdate"
+                          className="font-bold text-red-700 flex items-center gap-1 cursor-pointer"
+                        >
+                          <WarningCircleIcon size={18} weight="fill" />
+                          อันตราย: บังคับอัปเดตราคาทุกสาขาทันที (Force Global
+                          Sync)
+                        </label>
+                        <p className="text-red-600 font-medium text-xs mt-1">
+                          คำเตือน: คำสั่งนี้จะทำการ "ล้างราคาทุกสาขา"
+                          ที่ตั้งไว้เองทั้งหมด
+                          และบังคับให้กลับมาใช้ราคากลางนี้ทันที!
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
 
               <div className="bg-gray-50 px-6 py-5 sm:flex sm:flex-row-reverse sm:gap-x-3 border-t border-gray-100 mt-2">
@@ -545,9 +544,11 @@ export default function AdminModal({
                   type="button"
                   onClick={handlePreSubmit}
                   disabled={isSubmitDisabled}
-                  className={`inline-flex w-full justify-center rounded-lg px-6 py-2.5 text-sm font-semibold text-white shadow-sm sm:w-auto transition-all cursor-pointer ${saveMode === "branch" ? "bg-gray-950 hover:bg-gray-800" : "bg-red-600 hover:bg-red-700"} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`inline-flex w-full justify-center rounded-lg px-6 py-2.5 text-sm font-semibold text-white shadow-sm sm:w-auto transition-all cursor-pointer ${saveMode === SYS_ROLES.BRANCH ? "bg-gray-950 hover:bg-gray-800" : "bg-red-600 hover:bg-red-700"} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  {saveMode === "branch" ? "บันทึกราคาสาขา" : "ประกาศราคากลาง"}
+                  {saveMode === SYS_ROLES.BRANCH
+                    ? "บันทึกราคาสาขา"
+                    : "ประกาศราคากลาง"}
                 </button>
                 <button
                   type="button"
@@ -575,7 +576,9 @@ export default function AdminModal({
       <BannerManagerModal
         isOpen={isBannerModalOpen}
         onClose={() => setIsBannerModalOpen(false)}
-        branchName={userRole === "admin" ? "ส่วนกลาง (Admin)" : `${branchName}`}
+        branchName={
+          userRole === SYS_ROLES.ADMIN ? "ส่วนกลาง (Admin)" : `${branchName}`
+        }
         banners={banners}
         onUploadBanner={handleUploadBanner}
         onDeleteBanner={handleDeleteBanner}
