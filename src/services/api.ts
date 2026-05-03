@@ -33,11 +33,13 @@ export const getGoldPrices = async (): Promise<GoldPrices> => {
     if (!data) {
       return { barBuy: 0, barSale: 0, ornaReturn: 0 };
     }
-
+    const barBuy = data.bar_buy || 0;
+    const barSale = data.bar_sell || 0;
+    const calculatedOrnaReturn = Math.floor(barBuy * 0.95);
     return {
-      barBuy: data.bar_buy || 0,
-      barSale: data.bar_sell || 0,
-      ornaReturn: data.ornament_buy || 0,
+      barBuy: barBuy,
+      barSale: barSale,
+      ornaReturn: calculatedOrnaReturn,
       priceAt: data.created_at,
     };
   } catch (err) {
