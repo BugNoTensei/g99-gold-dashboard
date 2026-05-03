@@ -97,7 +97,7 @@ export const addNewBranchByAdmin = async (name: string, adminPin: string) => {
 
 export const uploadPromotionBanner = async (
   file: File,
-  branchId: string = "main",
+  branchId: string = ADMIN_BRANCH_ID,
 ) => {
   if (!supabase) throw new Error("Supabase is not initialized");
 
@@ -128,7 +128,7 @@ export const uploadPromotionBanner = async (
 export const deletePromotionBanner = async (
   id: string,
   imageUrl: string,
-  branchId: string = "main",
+  branchId: string = ADMIN_BRANCH_ID,
 ) => {
   if (!supabase) throw new Error("Supabase is not initialized");
 
