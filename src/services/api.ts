@@ -1,25 +1,8 @@
-import axios from "axios";
 import { supabase } from "../config/supabase";
 import { ADMIN_BRANCH_ID } from "../config/constants";
+import type { GoldPrices, Branch, PromotionBanner } from "../types";
 
-const API_URL = import.meta.env.VITE_API_URL;
 const PIN = import.meta.env.VITE_UPDATE_PIN;
-
-export interface GoldPrices {
-  barBuy: number;
-  barSale: number;
-  ornaReturn: number;
-  priceAt?: string;
-  update_time?: string;
-}
-
-export interface Branch {
-  id: string;
-  branch_name: string;
-  branch_pin: string;
-  is_configured: boolean;
-  role?: "branch" | "admin";
-}
 
 export interface BranchLoginResult {
   id: string;
@@ -27,29 +10,56 @@ export interface BranchLoginResult {
   role: "branch" | "admin";
 }
 
-export interface PromotionBanner {
-  id: string;
-  imageUrl: string;
-}
+export type { GoldPrices, Branch, PromotionBanner };
 
 export const getGoldPrices = async (): Promise<GoldPrices> => {
-  const res = await axios.get(API_URL);
-  return res.data;
+  if (!supabase) {
+    return { barBuy: 0, barSale: 0, ornaReturn: 0 };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("gold_prices")
+      .select("bar_buy, bar_sell, ornament_buy, created_at")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching gold prices:", error);
+      return { barBuy: 0, barSale: 0, ornaReturn: 0 };
+    }
+
+    if (!data) {
+      return { barBuy: 0, barSale: 0, ornaReturn: 0 };
+    }
+
+    return {
+      barBuy: data.bar_buy || 0,
+      barSale: data.bar_sell || 0,
+      ornaReturn: data.ornament_buy || 0,
+      priceAt: data.created_at,
+    };
+  } catch (err) {
+    console.error("Unexpected error in getGoldPrices:", err);
+    return { barBuy: 0, barSale: 0, ornaReturn: 0 };
+  }
 };
 
 export const updateGoldPrices = async (payload: GoldPrices) => {
-  await axios.post(API_URL, payload);
+  if (!supabase) throw new Error("Supabase is not initialized");
 
-  if (supabase) {
-    const { error } = await supabase.rpc("insert_gold_prices_secure", {
-      p_bar_buy: payload.barBuy,
-      p_bar_sell: payload.barSale,
-      p_ornament_buy: payload.ornaReturn,
-      p_pin: PIN,
-      p_source: "G99_Dashboard",
-    });
+  const { error } = await supabase.rpc("insert_gold_prices_secure", {
+    p_bar_buy: payload.barBuy,
+    p_bar_sell: payload.barSale,
+    p_ornament_buy: payload.ornaReturn,
+    p_pin: PIN,
+    p_source: "G99_Dashboard",
+  });
 
-    if (error) throw error;
+  if (error) {
+    console.error("Error updating gold prices via RPC:", error);
+    throw error;
   }
 };
 
