@@ -14,7 +14,7 @@ import { SYS_ROLES, ADMIN_BRANCH_ID, STORAGE_KEYS } from "./config/constants";
 import {
   CheckCircleIcon,
   WarningCircleIcon,
-  DeviceMobileIcon,
+  MonitorIcon,
   ArrowsClockwiseIcon,
   ImagesIcon,
 } from "@phosphor-icons/react";
@@ -219,8 +219,8 @@ export default function App() {
       {!isDesktopOrTV && (
         <div className="fixed inset-0 z-99999 bg-black text-white flex flex-col items-center justify-center p-8 text-center overscroll-none">
           <div className="flex items-center justify-center gap-4 mb-6 text-gold-light">
-            <DeviceMobileIcon size={64} className="animate-pulse" />
-            <ArrowsClockwiseIcon size={48} />
+            <MonitorIcon size={64} className="animate-pulse" />
+            <WarningCircleIcon size={48} />
           </div>
           <h2 className="text-3xl font-bold text-gold-light mb-4">
             ไม่รองรับอุปกรณ์นี้
