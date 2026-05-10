@@ -49,8 +49,28 @@ export function useBannerManagement(
       STORAGE_KEYS.USE_ADMIN_BANNERS(branchId),
       String(useAdminBanners),
     );
-    fetchBanners();
-  }, [useAdminBanners, fetchBanners, branchId]);
+  }, [useAdminBanners, branchId]);
+
+  useEffect(() => {
+    const targetBranch =
+      userRole === SYS_ROLES.ADMIN
+        ? ADMIN_BRANCH_ID
+        : useAdminBanners
+          ? ADMIN_BRANCH_ID
+          : branchId;
+    getPromotionBanners(targetBranch)
+      .then((result: PromotionBanner[]) => {
+        setBanners(
+          result.map((b) => ({
+            id: b.id,
+            url: b.imageUrl,
+          })),
+        );
+      })
+      .catch(() => {
+        setBanners([]);
+      });
+  }, [userRole, branchId, useAdminBanners]);
 
   const handleUploadBanner = async (file: File) => {
     try {
