@@ -155,9 +155,11 @@ export const deletePromotionBanner = async (
   const fileName = urlWithoutQuery.split("/").pop();
 
   if (fileName) {
-    await supabase.storage
+    const { error: storageError } = await supabase.storage
       .from("promotions")
       .remove([`${branchId}/${fileName}`]);
+
+    if (storageError) throw storageError;
   }
 };
 
