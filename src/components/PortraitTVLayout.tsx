@@ -30,7 +30,7 @@ export default function PortraitTVLayout({
   return (
     <div className="flex flex-col w-full h-dvh bg-black overflow-hidden">
       <div
-        className="flex-none bg-linear-to-br from-primary to-secondary border-b-8 border-gold-dark px-[5vw] pt-[2vh] pb-[1vh] flex flex-col items-center transition-opacity duration-300 relative z-20"
+        className="flex-none bg-primary border-b-8 border-gold-dark px-[5vw] pt-[2vh] pb-[1vh] flex flex-col items-center transition-opacity duration-300 relative z-20"
         style={{ opacity: panelOpacity }}
       >
         <div className="text-center mb-[1vh]">
@@ -38,7 +38,7 @@ export default function PortraitTVLayout({
             <img
               src={APP_CONFIG.STORE_LOGO_URL}
               alt="Store Logo"
-              className="max-h-[clamp(30px,4vh,60px)] w-auto mx-auto mb-1"
+              className="h-[clamp(36px,4.8vh,72px)] w-auto mx-auto mb-1 object-contain"
             />
           ) : (
             <div className="text-gold-light text-[clamp(1.4rem,3vh,2.5rem)] font-bold leading-none">

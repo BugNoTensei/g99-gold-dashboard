@@ -14,7 +14,7 @@ export type { GoldPrices, Branch, PromotionBanner };
 
 export const getGoldPrices = async (): Promise<GoldPrices> => {
   if (!supabase) {
-    return { barBuy: 0, barSale: 0, ornaReturn: 0 };
+    return { barBuy: 0, barSale: 0, ornaReturn: 0, priceUP: 0 };
   }
 
   try {
@@ -27,24 +27,26 @@ export const getGoldPrices = async (): Promise<GoldPrices> => {
 
     if (error) {
       console.error("Error fetching gold prices:", error);
-      return { barBuy: 0, barSale: 0, ornaReturn: 0 };
+      return { barBuy: 0, barSale: 0, ornaReturn: 0, priceUP: 0 };
     }
 
     if (!data) {
-      return { barBuy: 0, barSale: 0, ornaReturn: 0 };
+      return { barBuy: 0, barSale: 0, ornaReturn: 0, priceUP: 0 };
     }
     const barBuy = data.bar_buy || 0;
     const barSale = data.bar_sell || 0;
-    const calculatedOrnaReturn = Math.floor(barBuy * 0.95);
+    const ornaReturn = data.ornament_buy || 0;
+
     return {
-      barBuy: barBuy,
-      barSale: barSale,
-      ornaReturn: calculatedOrnaReturn,
+      barBuy,
+      barSale,
+      ornaReturn,
+      priceUP: 0, 
       priceAt: data.created_at,
     };
   } catch (err) {
     console.error("Unexpected error in getGoldPrices:", err);
-    return { barBuy: 0, barSale: 0, ornaReturn: 0 };
+    return { barBuy: 0, barSale: 0, ornaReturn: 0, priceUP: 0 };
   }
 };
 

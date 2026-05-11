@@ -22,6 +22,7 @@ export function useGoldPrice(
     barBuy: 0,
     barSale: 0,
     ornaReturn: 0,
+    priceUP: 0,
   });
 
   const [localPrices, setLocalPrices] = useState<GoldPrices | null>(() => {
@@ -77,6 +78,12 @@ export function useGoldPrice(
         }
 
         lastUpdateKey.current = currentKey;
+
+        if (isAutoFetch) {
+          data.ornaReturn = Math.floor(data.barBuy * 0.95);
+        }
+        data.priceUP = Math.floor(data.barBuy * 0.9);
+
         setCentralPrices(data);
       } catch (error) {
         console.error(error);

@@ -22,13 +22,22 @@ export function usePriceForm({
   });
 
   const resetForm = useCallback(() => {
+    const barBuy = currentPrices.barBuy > 0 ? String(currentPrices.barBuy) : "";
+    const barSale =
+      currentPrices.barSale > 0 ? String(currentPrices.barSale) : "";
+    let ornaReturn =
+      currentPrices.ornaReturn > 0 ? String(currentPrices.ornaReturn) : "";
+
+    if (isAutoFetch && currentPrices.barBuy > 0) {
+      ornaReturn = String(Math.floor(currentPrices.barBuy * 0.95));
+    }
+
     setFormData({
-      barBuy: currentPrices.barBuy > 0 ? String(currentPrices.barBuy) : "",
-      barSale: currentPrices.barSale > 0 ? String(currentPrices.barSale) : "",
-      ornaReturn:
-        currentPrices.ornaReturn > 0 ? String(currentPrices.ornaReturn) : "",
+      barBuy,
+      barSale,
+      ornaReturn,
     });
-  }, [currentPrices]);
+  }, [currentPrices, isAutoFetch]);
 
   const handleInputChange = (
     field: "barBuy" | "barSale" | "ornaReturn",
@@ -40,8 +49,7 @@ export function usePriceForm({
       if (field === "barBuy") {
         const buyPrice = Number(value);
         if (buyPrice > 0) {
-          const calculatedOrna = Math.floor(buyPrice * 0.95);
-          newData.ornaReturn = String(calculatedOrna);
+          newData.ornaReturn = String(Math.floor(buyPrice * 0.95));
         } else {
           newData.ornaReturn = "";
         }

@@ -106,6 +106,7 @@ export default function AdminModal({
       barBuy: Number(formData.barBuy),
       barSale: Number(formData.barSale),
       ornaReturn: formData.ornaReturn ? Number(formData.ornaReturn) : 0,
+      priceUP: Math.floor(Number(formData.barBuy) * 0.9),
       priceAt: currentTime,
     };
 

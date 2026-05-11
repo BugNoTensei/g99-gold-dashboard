@@ -257,7 +257,7 @@ export default function App() {
       ) : (
         <>
           <div
-            className="w-1/2 h-full bg-linear-to-br from-primary to-secondary p-[2vh_2vw] flex flex-col justify-center gap-[2vh] border-r-8 border-gold-dark z-10 transition-opacity duration-300 md:p-[clamp(1rem,4vh,6rem)] md:justify-evenly"
+            className="w-1/2 h-full bg-primary p-[2vh_2vw] flex flex-col justify-center gap-[2vh] border-r-8 border-gold-dark z-10 transition-opacity duration-300 md:p-[clamp(1rem,4vh,6rem)] md:justify-evenly"
             style={{ opacity: panelOpacity }}
           >
             <div className="text-center flex-none">
@@ -265,14 +265,14 @@ export default function App() {
                 <img
                   src={APP_CONFIG.STORE_LOGO_URL}
                   alt="Store Logo"
-                  className="max-h-[clamp(40px,10vh,120px)] w-auto mx-auto mb-[0.5vh] drop-shadow-lg md:max-h-[clamp(60px,15vh,180px)]"
+                  className="max-h-[clamp(40px,10vh,120px)] md:max-h-[clamp(60px,15vh,180px)] w-auto mx-auto mb-[3vh] drop-shadow-lg scale-125"
                 />
               ) : (
                 <div className="text-gold-light text-[clamp(1.5rem,4vh,4rem)] font-bold drop-shadow-lg mb-[0.5vh] md:text-[clamp(2.5rem,7vh,6rem)]">
                   GOLDEN99
                 </div>
               )}
-              <div className="text-white text-[clamp(1.2rem,3.5vh,3rem)] font-medium mb-[0.5vh] leading-none tracking-tight md:text-[clamp(1.8rem,5vh,4rem)]">
+              <div className="text-white text-[clamp(1.2rem,3.5vh,3rem)] font-medium mb-[1vh] leading-none tracking-tight md:text-[clamp(1.8rem,5vh,4rem)]">
                 ราคาทองคำวันนี้
               </div>
               <div className="text-[#ffcccc] text-[clamp(0.6rem,1.5vh,1.2rem)] font-light mt-[0.5vh] md:text-[clamp(0.9rem,2.2vh,1.8rem)] md:mt-[1vh]">
@@ -292,6 +292,9 @@ export default function App() {
                     type="buy"
                     price={prices.ornaReturn}
                   />
+                </PriceCategory>
+                <PriceCategory title="ราคาขายฝากสูงสุดต่อบาท">
+                  <PriceRow label="ขายออก" type="buy" price={prices.priceUP} />
                 </PriceCategory>
               </div>
             </div>

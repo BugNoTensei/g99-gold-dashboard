@@ -26,6 +26,7 @@ export default function AdminPriceForm({
   isAutoFetch,
 }: Props) {
   const isReadOnly = isAutoFetch && userRole !== SYS_ROLES.ADMIN;
+  const isOrnaReadOnly = isReadOnly;
 
   return (
     <div className="space-y-4">
@@ -98,10 +99,10 @@ export default function AdminPriceForm({
           <div className="relative mt-2 rounded-lg shadow-sm">
             <input
               type="number"
-              disabled={isReadOnly}
+              disabled={isOrnaReadOnly}
               value={formData.ornaReturn}
               onChange={(e) => handleInputChange("ornaReturn", e.target.value)}
-              className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isReadOnly ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-gray-50 text-gray-950 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
+              className={`block w-full rounded-lg border-0 py-3 pl-4 pr-12 ring-1 ring-inset ring-gray-300 sm:text-sm font-semibold transition-colors focus:outline-none ${isOrnaReadOnly ? "bg-gray-100 text-gray-700 cursor-not-allowed" : "bg-gray-50 text-gray-950 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-red-600"}`}
               placeholder="ระบบจะคำนวณอัตโนมัติหากเว้นว่าง"
             />
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">

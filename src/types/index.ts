@@ -4,6 +4,7 @@ export interface GoldPrices {
   ornaReturn: number;
   priceAt?: string;
   update_time?: string;
+  priceUP: number;
 }
 
 export interface Branch {
