@@ -265,7 +265,7 @@ export default function App() {
                 <img
                   src={APP_CONFIG.STORE_LOGO_URL}
                   alt="Store Logo"
-                  className="max-h-[clamp(40px,10vh,120px)] md:max-h-[clamp(60px,15vh,180px)] w-auto mx-auto mb-[3vh] drop-shadow-lg scale-125"
+                  className="max-h-[clamp(40px,10vh,120px)] md:max-h-[clamp(60px,15vh,180px)] w-auto mx-auto mb-[1.5vh] drop-shadow-lg scale-125"
                 />
               ) : (
                 <div className="text-gold-light text-[clamp(1.5rem,4vh,4rem)] font-bold drop-shadow-lg mb-[0.5vh] md:text-[clamp(2.5rem,7vh,6rem)]">
@@ -280,12 +280,12 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex-none w-full px-[5vw] flex flex-col gap-[2vh] md:gap-[3vh] landscape:px-[1vw] landscape:gap-[1vh]">
+            <div className="flex-none w-full px-[5vw] flex flex-col gap-[2vh] md:gap-[1.5vh] landscape:px-[1vw] landscape:gap-[1vh]">
               <PriceCategory title="ทองคำแท่ง">
                 <PriceRow label="รับซื้อ" type="buy" price={prices.barBuy} />
                 <PriceRow label="ขายออก" type="sell" price={prices.barSale} />
               </PriceCategory>
-              <div className="mt-0 md:mt-[4vh] landscape:mt-[1vh]">
+              <div className="mt-0 md:mt-[1vh] landscape:mt-[1vh]">
                 <PriceCategory title="ทองรูปพรรณ">
                   <PriceRow
                     label="รับซื้อ"

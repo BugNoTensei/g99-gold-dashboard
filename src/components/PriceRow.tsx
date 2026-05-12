@@ -11,7 +11,7 @@ export default function PriceRow({ label, type = "buy", price }: Props) {
     : "bg-gradient-to-r from-gold-light to-[#e6c27a]";
 
   return (
-    <div className="flex items-center mb-[1vh] md:mb-[1.5vh] h-[clamp(40px,10vh,110px)] md:h-[12vh] w-full shrink-0">
+    <div className="flex items-center mb-[1vh] md:mb-[1vh] h-[clamp(40px,10vh,110px)] md:h-[10.5vh] w-full shrink-0">
       <div
         className={`w-[35%] flex-none h-full flex items-center justify-center md:text-[clamp(1.3rem,3.5vh,2.4rem)] font-semibold rounded-l-[45px] shadow-[-4px_4px_10px_rgba(0,0,0,0.2)] z-10 whitespace-nowrap tracking-wide text-text-dark ${labelBg}`}
       >
