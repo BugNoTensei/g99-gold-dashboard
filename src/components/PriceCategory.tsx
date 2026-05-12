@@ -5,7 +5,7 @@ interface Props {
 
 export default function PriceCategory({ title, children }: Props) {
   return (
-    <div className="mb-[0.5vh]">
+    <div>
       <h3 className="text-gold-light text-[clamp(1.8rem,3.5vh,4rem)] font-bold text-center mb-[0.5vh] drop-shadow-md">
         {title}
       </h3>

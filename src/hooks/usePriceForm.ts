@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import type { GoldPrices, UserRole } from "../types";
 import { SYS_ROLES } from "../config/constants";
+import { calculateOrnamentsReturnPrice } from "../utils/price";
 
 interface UsePriceFormProps {
   currentPrices: GoldPrices;
@@ -29,7 +30,7 @@ export function usePriceForm({
       currentPrices.ornaReturn > 0 ? String(currentPrices.ornaReturn) : "";
 
     if (isAutoFetch && currentPrices.barBuy > 0) {
-      ornaReturn = String(Math.floor(currentPrices.barBuy * 0.95));
+      ornaReturn = String(calculateOrnamentsReturnPrice(currentPrices.barBuy));
     }
 
     setFormData({
@@ -49,7 +50,7 @@ export function usePriceForm({
       if (field === "barBuy") {
         const buyPrice = Number(value);
         if (buyPrice > 0) {
-          newData.ornaReturn = String(Math.floor(buyPrice * 0.95));
+          newData.ornaReturn = String(calculateOrnamentsReturnPrice(buyPrice));
         } else {
           newData.ornaReturn = "";
         }

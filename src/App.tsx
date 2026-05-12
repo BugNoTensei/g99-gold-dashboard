@@ -12,6 +12,10 @@ import { useGoldPrice } from "./hooks/useGoldPrice";
 import { checkBranchExists, getPromotionBanners } from "./services/api";
 import { SYS_ROLES, ADMIN_BRANCH_ID, STORAGE_KEYS } from "./config/constants";
 import {
+  calculateMaxConsignmentPrice,
+  calculateOrnamentsReturnPrice,
+} from "./utils/price";
+import {
   CheckCircleIcon,
   WarningCircleIcon,
   MonitorIcon,
@@ -265,10 +269,10 @@ export default function App() {
                 <img
                   src={APP_CONFIG.STORE_LOGO_URL}
                   alt="Store Logo"
-                  className="max-h-[clamp(40px,10vh,120px)] md:max-h-[clamp(60px,15vh,180px)] w-auto mx-auto mb-[1.5vh] drop-shadow-lg scale-125"
+                  className="max-h-[clamp(40px,10vh,120px)] md:max-h-[clamp(60px,15vh,180px)] w-auto mx-auto mb-[4vh] drop-shadow-lg scale-125"
                 />
               ) : (
-                <div className="text-gold-light text-[clamp(1.5rem,4vh,4rem)] font-bold drop-shadow-lg mb-[0.5vh] md:text-[clamp(2.5rem,7vh,6rem)]">
+                <div className="text-gold-light text-[clamp(1.5rem,4vh,4rem)] font-bold drop-shadow-lg mb-[2vh] md:text-[clamp(2.5rem,7vh,6rem)]">
                   GOLDEN99
                 </div>
               )}
@@ -280,23 +284,25 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex-none w-full px-[5vw] flex flex-col gap-[2vh] md:gap-[1.5vh] landscape:px-[1vw] landscape:gap-[1vh]">
+            <div className="flex-none w-full px-[5vw] flex flex-col gap-[2vh] md:gap-[2.5vh] landscape:px-[1vw] landscape:gap-[1vh]">
               <PriceCategory title="ทองคำแท่ง">
-                <PriceRow label="รับซื้อ" type="buy" price={prices.barBuy} />
-                <PriceRow label="ขายออก" type="sell" price={prices.barSale} />
+                <PriceRow label="รับซื้อ" type="gold" price={prices.barBuy} />
+                <PriceRow label="ขายออก" type="gold" price={prices.barSale} />
               </PriceCategory>
-              <div className="mt-0 md:mt-[1vh] landscape:mt-[1vh]">
-                <PriceCategory title="ทองรูปพรรณ">
-                  <PriceRow
-                    label="รับซื้อ"
-                    type="buy"
-                    price={prices.ornaReturn}
-                  />
-                </PriceCategory>
-                <PriceCategory title="ราคาขายฝากสูงสุดต่อบาท">
-                  <PriceRow label="ขายออก" type="buy" price={prices.priceUP} />
-                </PriceCategory>
-              </div>
+              <PriceCategory title="ทองรูปพรรณ">
+                <PriceRow
+                  label="รับซื้อ"
+                  type="buy"
+                  price={calculateOrnamentsReturnPrice(prices.barBuy)}
+                />
+              </PriceCategory>
+              <PriceCategory title="ราคาขายฝากสูงสุดต่อบาท">
+                <PriceRow
+                  type="gold"
+                  label="บาทละ"
+                  price={calculateMaxConsignmentPrice(prices.barBuy)}
+                />
+              </PriceCategory>
             </div>
           </div>
 

@@ -9,6 +9,7 @@ import {
   WarningCircleIcon,
   InfoIcon,
 } from "@phosphor-icons/react";
+import { calculateOrnamentsReturnPrice } from "../utils/price";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -98,7 +99,7 @@ export default function ConfirmModal({
                       <span className="font-semibold text-gray-900">
                         {formData.ornaReturn && Number(formData.ornaReturn) > 0
                           ? `${Number(formData.ornaReturn).toLocaleString()} บาท`
-                          : `ประมาณ ${(Number(formData.barBuy) * 0.95).toLocaleString()} บาท`}
+                          : `ประมาณ ${calculateOrnamentsReturnPrice(Number(formData.barBuy)).toLocaleString()} บาท`}
                       </span>
                     </div>
                   </div>

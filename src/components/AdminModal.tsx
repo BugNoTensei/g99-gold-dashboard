@@ -11,6 +11,7 @@ import AdminPriceForm from "./AdminPriceForm";
 import { useBannerManagement } from "../hooks/useBannerManagement";
 import { usePriceForm } from "../hooks/usePriceForm";
 import { WarningCircleIcon } from "@phosphor-icons/react";
+import { calculateMaxConsignmentPrice } from "../utils/price";
 
 interface Props {
   isOpen: boolean;
@@ -106,7 +107,7 @@ export default function AdminModal({
       barBuy: Number(formData.barBuy),
       barSale: Number(formData.barSale),
       ornaReturn: formData.ornaReturn ? Number(formData.ornaReturn) : 0,
-      priceUP: Math.floor(Number(formData.barBuy) * 0.9),
+      priceUP: calculateMaxConsignmentPrice(Number(formData.barBuy)),
       priceAt: currentTime,
     };
 

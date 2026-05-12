@@ -7,6 +7,10 @@ import {
 } from "../services/api";
 import type { GoldPrices } from "../types";
 import { STORAGE_KEYS } from "../config/constants";
+import {
+  calculateMaxConsignmentPrice,
+  calculateOrnamentsReturnPrice,
+} from "../utils/price";
 
 type GoldPricesWithTime = GoldPrices & { update_time?: string };
 
@@ -80,9 +84,9 @@ export function useGoldPrice(
         lastUpdateKey.current = currentKey;
 
         if (isAutoFetch) {
-          data.ornaReturn = Math.floor(data.barBuy * 0.95);
+          data.ornaReturn = calculateOrnamentsReturnPrice(data.barBuy);
         }
-        data.priceUP = Math.floor(data.barBuy * 0.9);
+        data.priceUP = calculateMaxConsignmentPrice(data.barBuy);
 
         setCentralPrices(data);
       } catch (error) {
