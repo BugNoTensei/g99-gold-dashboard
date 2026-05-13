@@ -292,7 +292,7 @@ export default function App() {
               <PriceCategory title="ทองรูปพรรณ">
                 <PriceRow
                   label="รับซื้อ"
-                  type="buy"
+                  type="gold"
                   price={calculateOrnamentsReturnPrice(prices.barBuy)}
                 />
               </PriceCategory>
