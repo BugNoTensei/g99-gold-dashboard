@@ -18,12 +18,13 @@ import {
   WarningIcon,
   MagnifyingGlassIcon,
 } from "@phosphor-icons/react";
-import { supabase } from "../config/supabase";
 import {
+  getBranches,
   addNewBranchByAdmin,
   resetBranchPin,
   deleteBranch,
 } from "../services/api";
+import type { Branch } from "../types";
 
 export interface BranchInfo {
   id: string;
@@ -44,7 +45,7 @@ type PendingAction =
   | null;
 
 export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
-  const [branches, setBranches] = useState<BranchInfo[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
@@ -55,16 +56,10 @@ export function BranchManagerModal({ isOpen, onClose, onShowToast }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchBranches = useCallback(async () => {
-    if (!supabase) return;
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("branches")
-        .select("id, branch_name, is_configured")
-        .order("branch_name", { ascending: true });
-
-      if (error) throw error;
-      if (data) setBranches(data);
+      const data = await getBranches();
+      setBranches(data);
     } catch {
       onShowToast("ไม่สามารถดึงข้อมูลสาขาได้", "error");
     } finally {

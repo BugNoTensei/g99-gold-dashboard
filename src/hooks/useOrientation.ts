@@ -18,17 +18,23 @@ function detectDesktopOrTV(): boolean {
   const ua = navigator.userAgent.toLowerCase();
 
   const isTVUA =
-    /smart-tv|smarttv|googletv|appletv|hbbtv|netcast|viera|nettv|philipstv|roku|tizen|webos/.test(
+    /smart-tv|smarttv|googletv|appletv|hbbtv|netcast|viera|nettv|philipstv|roku|tizen|webos|android.*tv|atv|aftv|xbox|crkey/.test(
       ua,
     );
 
+  const isMobileUA = /iphone|ipod|android.*mobile|windows phone/.test(ua);
+
   const isTabletUA = /ipad|android(?!.*mobile)|tablet|surface/.test(ua);
 
-  if (isTVUA) return true;
-  if (isTabletUA) return false;
-  if (isTouchOnlyDevice()) return false;
+  if (isTVUA) {
+    return true;
+  }
 
-  return window.innerWidth >= 1024;
+  if (isMobileUA || isTabletUA || isTouchOnlyDevice()) {
+    return false;
+  }
+
+  return window.innerWidth >= 768 || window.innerHeight >= 768;
 }
 
 function getOrientation(): Orientation {

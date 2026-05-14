@@ -9,12 +9,16 @@ import PortraitTVLayout from "./components/PortraitTVLayout";
 import SetupScreen from "./components/SetupScreen";
 import { APP_CONFIG } from "./config";
 import { useGoldPrice } from "./hooks/useGoldPrice";
-import { supabase } from "./config/supabase";
-import { checkBranchExists } from "./services/api";
+import { checkBranchExists, getPromotionBanners } from "./services/api";
+import { SYS_ROLES, ADMIN_BRANCH_ID, STORAGE_KEYS } from "./config/constants";
+import {
+  calculateMaxConsignmentPrice,
+  calculateOrnamentsReturnPrice,
+} from "./utils/price";
 import {
   CheckCircleIcon,
   WarningCircleIcon,
-  DeviceMobileIcon,
+  MonitorIcon,
   ArrowsClockwiseIcon,
   ImagesIcon,
 } from "@phosphor-icons/react";
@@ -24,7 +28,7 @@ export default function App() {
     id: string;
     name: string;
   } | null>(() => {
-    const saved = localStorage.getItem("g99_branch_config");
+    const saved = localStorage.getItem(STORAGE_KEYS.BRANCH_CONFIG);
     return saved ? JSON.parse(saved) : null;
   });
 
@@ -39,7 +43,7 @@ export default function App() {
   const [userRole, setUserRole] = useState<"branch" | "admin" | null>(null);
   const [displayAds, setDisplayAds] = useState<string[]>([]);
   const [isAdsLoading, setIsAdsLoading] = useState(true);
-
+  const [adsRefreshKey, setAdsRefreshKey] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playCountRef = useRef<number>(1);
 
@@ -53,13 +57,12 @@ export default function App() {
     },
     [],
   );
-
   useEffect(() => {
     const validateSession = async () => {
       if (branchConfig?.id) {
         const exists = await checkBranchExists(branchConfig.id);
         if (!exists) {
-          localStorage.removeItem("g99_branch_config");
+          localStorage.removeItem(STORAGE_KEYS.BRANCH_CONFIG);
           showToast("สาขานี้ถูกลบออกจากระบบแล้ว", "error");
           setTimeout(() => {
             window.location.reload();
@@ -69,36 +72,41 @@ export default function App() {
     };
     validateSession();
   }, [branchConfig?.id, showToast]);
-
   useEffect(() => {
+    let isMounted = true;
+
     const fetchAds = async () => {
-      if (!isSystemReady || !supabase || !branchConfig) return;
+      if (!isSystemReady || !branchConfig) return;
 
       const storedValue = localStorage.getItem(
-        `g99_use_admin_banners_${branchConfig.id}`,
+        STORAGE_KEYS.USE_ADMIN_BANNERS(branchConfig.id),
       );
       const useAdmin = storedValue === null ? true : storedValue !== "false";
-      const targetBranch = useAdmin ? "main" : branchConfig.id;
+      const targetBranch = useAdmin ? ADMIN_BRANCH_ID : branchConfig.id;
 
-      const { data } = await supabase
-        .from("branch_promotions")
-        .select("image_url")
-        .eq("branch_id", targetBranch)
-        .order("created_at", { ascending: false });
+      try {
+        const banners = await getPromotionBanners(targetBranch);
 
-      if (data && data.length > 0) {
-        setDisplayAds(
-          data.map((item) => `${item.image_url}?t=${new Date().getTime()}`),
-        );
-      } else {
-        setDisplayAds([]);
+        if (!isMounted) return;
+
+        if (banners.length > 0) {
+          setDisplayAds(banners.map((item) => item.imageUrl));
+        } else {
+          setDisplayAds([]);
+        }
+      } catch {
+        if (isMounted) setDisplayAds([]);
+      } finally {
+        if (isMounted) setIsAdsLoading(false);
       }
-      setIsAdsLoading(false);
     };
 
     fetchAds();
-  }, [isSystemReady, isModalOpen, branchConfig]);
 
+    return () => {
+      isMounted = false;
+    };
+  }, [isSystemReady, branchConfig, adsRefreshKey]);
   useEffect(() => {
     if (typeof window !== "undefined" && APP_CONFIG.NOTIFICATION_SOUND_URL) {
       const audio = new Audio(APP_CONFIG.NOTIFICATION_SOUND_URL);
@@ -194,10 +202,10 @@ export default function App() {
         <div className="absolute top-4 left-4 z-50 flex items-center gap-3 bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg transition-all">
           <div className="flex items-center gap-2">
             <div
-              className={`w-2.5 h-2.5 rounded-full animate-pulse ${userRole === "admin" ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" : "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)]"}`}
+              className={`w-2.5 h-2.5 rounded-full animate-pulse ${userRole === SYS_ROLES.ADMIN ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" : "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)]"}`}
             />
             <span className="text-white text-xs md:text-sm font-medium tracking-wide">
-              {userRole === "admin"
+              {userRole === SYS_ROLES.ADMIN
                 ? "Admin Mode"
                 : `สาขา-${branchConfig.name}`}
             </span>
@@ -215,8 +223,8 @@ export default function App() {
       {!isDesktopOrTV && (
         <div className="fixed inset-0 z-99999 bg-black text-white flex flex-col items-center justify-center p-8 text-center overscroll-none">
           <div className="flex items-center justify-center gap-4 mb-6 text-gold-light">
-            <DeviceMobileIcon size={64} className="animate-pulse" />
-            <ArrowsClockwiseIcon size={48} />
+            <MonitorIcon size={64} className="animate-pulse" />
+            <WarningCircleIcon size={48} />
           </div>
           <h2 className="text-3xl font-bold text-gold-light mb-4">
             ไม่รองรับอุปกรณ์นี้
@@ -253,7 +261,7 @@ export default function App() {
       ) : (
         <>
           <div
-            className="w-1/2 h-full bg-linear-to-br from-primary to-secondary p-[2vh_2vw] flex flex-col justify-center gap-[2vh] border-r-8 border-gold-dark z-10 transition-opacity duration-300 md:p-[clamp(1rem,4vh,6rem)] md:justify-evenly"
+            className="w-1/2 h-full bg-primary p-[2vh_2vw] flex flex-col justify-center gap-[2vh] border-r-8 border-gold-dark z-10 transition-opacity duration-300 md:p-[clamp(1rem,4vh,6rem)] md:justify-evenly"
             style={{ opacity: panelOpacity }}
           >
             <div className="text-center flex-none">
@@ -261,14 +269,14 @@ export default function App() {
                 <img
                   src={APP_CONFIG.STORE_LOGO_URL}
                   alt="Store Logo"
-                  className="max-h-[clamp(40px,10vh,120px)] w-auto mx-auto mb-[0.5vh] drop-shadow-lg md:max-h-[clamp(60px,15vh,180px)]"
+                  className="max-h-[clamp(40px,10vh,120px)] md:max-h-[clamp(60px,15vh,180px)] w-auto mx-auto mb-[4vh] drop-shadow-lg scale-125"
                 />
               ) : (
-                <div className="text-gold-light text-[clamp(1.5rem,4vh,4rem)] font-bold drop-shadow-lg mb-[0.5vh] md:text-[clamp(2.5rem,7vh,6rem)]">
+                <div className="text-gold-light text-[clamp(1.5rem,4vh,4rem)] font-bold drop-shadow-lg mb-[2vh] md:text-[clamp(2.5rem,7vh,6rem)]">
                   GOLDEN99
                 </div>
               )}
-              <div className="text-white text-[clamp(1.2rem,3.5vh,3rem)] font-medium mb-[0.5vh] leading-none tracking-tight md:text-[clamp(1.8rem,5vh,4rem)]">
+              <div className="text-white text-[clamp(1.2rem,3.5vh,3rem)] font-medium mb-[1vh] leading-none tracking-tight md:text-[clamp(1.8rem,5vh,4rem)]">
                 ราคาทองคำวันนี้
               </div>
               <div className="text-[#ffcccc] text-[clamp(0.6rem,1.5vh,1.2rem)] font-light mt-[0.5vh] md:text-[clamp(0.9rem,2.2vh,1.8rem)] md:mt-[1vh]">
@@ -276,20 +284,25 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex-none w-full px-[5vw] flex flex-col gap-[2vh] md:gap-[3vh] landscape:px-[1vw] landscape:gap-[1vh]">
+            <div className="flex-none w-full px-[5vw] flex flex-col gap-[2vh] md:gap-[2.5vh] landscape:px-[1vw] landscape:gap-[1vh]">
               <PriceCategory title="ทองคำแท่ง">
-                <PriceRow label="รับซื้อ" type="buy" price={prices.barBuy} />
-                <PriceRow label="ขายออก" type="sell" price={prices.barSale} />
+                <PriceRow label="รับซื้อ" type="gold" price={prices.barBuy} />
+                <PriceRow label="ขายออก" type="gold" price={prices.barSale} />
               </PriceCategory>
-              <div className="mt-0 md:mt-[4vh] landscape:mt-[1vh]">
-                <PriceCategory title="ทองรูปพรรณ">
-                  <PriceRow
-                    label="รับซื้อ"
-                    type="buy"
-                    price={prices.ornaReturn}
-                  />
-                </PriceCategory>
-              </div>
+              <PriceCategory title="ทองรูปพรรณ">
+                <PriceRow
+                  label="รับซื้อ"
+                  type="gold"
+                  price={calculateOrnamentsReturnPrice(prices.barBuy)}
+                />
+              </PriceCategory>
+              <PriceCategory title="ราคาขายฝากสูงสุดต่อบาท">
+                <PriceRow
+                  type="gold"
+                  label="บาทละ"
+                  price={calculateMaxConsignmentPrice(prices.barBuy)}
+                />
+              </PriceCategory>
             </div>
           </div>
 
@@ -322,8 +335,8 @@ export default function App() {
 
       <PinModal
         isOpen={isPinModalOpen}
+        branchId={branchConfig.id}
         onClose={() => setIsPinModalOpen(false)}
-        branchId={branchConfig?.id || ""}
         onSuccess={(role) => {
           setUserRole(role);
           setIsPinModalOpen(false);
@@ -332,7 +345,11 @@ export default function App() {
       />
       <AdminModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsAdsLoading(true);
+          setIsModalOpen(false);
+          setAdsRefreshKey((prev) => prev + 1);
+        }}
         currentPrices={prices}
         onShowToast={showToast}
         isAutoFetch={isAutoFetch}

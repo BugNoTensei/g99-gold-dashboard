@@ -5,7 +5,6 @@ import {
   CheckCircleIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react";
-import { supabase } from "../config/supabase";
 import { getBranches, setupBranchInitial, type Branch } from "../services/api";
 import { APP_CONFIG } from "../config";
 
@@ -32,7 +31,6 @@ export default function SetupScreen({ onSetupComplete }: Props) {
   );
 
   const loadBranches = useCallback(async () => {
-    if (!supabase) return;
     try {
       const branches = await getBranches();
       setAvailableBranches(branches);

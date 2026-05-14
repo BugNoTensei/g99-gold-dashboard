@@ -2,9 +2,15 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   getGoldPrices,
   updateGoldPrices,
-  type GoldPrices,
+  broadcastForceClearLocal,
+  subscribeToGoldPriceUpdates,
 } from "../services/api";
-import { supabase } from "../config/supabase";
+import type { GoldPrices } from "../types";
+import { STORAGE_KEYS } from "../config/constants";
+import {
+  calculateMaxConsignmentPrice,
+  calculateOrnamentsReturnPrice,
+} from "../utils/price";
 
 type GoldPricesWithTime = GoldPrices & { update_time?: string };
 
@@ -13,13 +19,14 @@ export function useGoldPrice(
   branchId: string,
   onPriceUpdated?: () => void,
 ) {
-  const LOCAL_STORAGE_KEY = `g99_local_price_${branchId}`;
-  const AUTO_FETCH_KEY = `g99_auto_fetch_${branchId}`;
+  const LOCAL_STORAGE_KEY = STORAGE_KEYS.LOCAL_PRICE(branchId);
+  const AUTO_FETCH_KEY = STORAGE_KEYS.AUTO_FETCH(branchId);
 
   const [centralPrices, setCentralPrices] = useState<GoldPrices>({
     barBuy: 0,
     barSale: 0,
     ornaReturn: 0,
+    priceUP: 0,
   });
 
   const [localPrices, setLocalPrices] = useState<GoldPrices | null>(() => {
@@ -75,6 +82,12 @@ export function useGoldPrice(
         }
 
         lastUpdateKey.current = currentKey;
+
+        if (isAutoFetch) {
+          data.ornaReturn = calculateOrnamentsReturnPrice(data.barBuy);
+        }
+        data.priceUP = calculateMaxConsignmentPrice(data.barBuy);
+
         setCentralPrices(data);
       } catch (error) {
         console.error(error);
@@ -114,12 +127,8 @@ export function useGoldPrice(
       console.error(error);
     }
 
-    if (forceUpdateAll && supabase) {
-      await supabase.channel("gold-price-updates").send({
-        type: "broadcast",
-        event: "force_clear_local",
-        payload: { message: "Admin forced update" },
-      });
+    if (forceUpdateAll) {
+      await broadcastForceClearLocal();
     }
 
     fetchPrice(true);
@@ -148,36 +157,21 @@ export function useGoldPrice(
       interval = window.setInterval(fetchPrice, 300000);
     }
 
-    if (supabase) {
-      const channel = supabase
-        .channel("gold-price-updates")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "gold_prices" },
-          (payload) => {
-            if (payload.eventType === "DELETE") return;
-            if (!isAutoFetch) return;
-
-            if (realtimeTimeout.current)
-              window.clearTimeout(realtimeTimeout.current);
-            realtimeTimeout.current = window.setTimeout(() => {
-              fetchPrice();
-            }, 1000);
-          },
-        )
-        .on("broadcast", { event: "force_clear_local" }, () => {
-          clearLocalPrice();
-        })
-        .subscribe();
-
-      return () => {
-        if (interval) window.clearInterval(interval);
-        if (channel) supabase?.removeChannel(channel);
-      };
-    }
+    const subscription = subscribeToGoldPriceUpdates(
+      () => {
+        if (realtimeTimeout.current)
+          window.clearTimeout(realtimeTimeout.current);
+        realtimeTimeout.current = window.setTimeout(() => {
+          fetchPrice();
+        }, 1000);
+      },
+      clearLocalPrice,
+      isAutoFetch,
+    );
 
     return () => {
       if (interval) window.clearInterval(interval);
+      subscription.unsubscribe();
     };
   }, [isSystemReady, isAutoFetch, fetchPrice, clearLocalPrice]);
   return {
